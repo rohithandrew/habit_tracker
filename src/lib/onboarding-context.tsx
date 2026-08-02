@@ -1,0 +1,50 @@
+import { createContext, useContext, useMemo, useState } from 'react';
+
+export interface OnboardingDraft {
+  username: string;
+  displayName: string;
+  avatarEmoji: string;
+  focusTimerEnabled: boolean;
+  moodTrackingEnabled: boolean;
+  periodTrackingEnabled: boolean;
+  periodLastStart: string | null;
+  periodCycleLength: number;
+}
+
+interface OnboardingContextValue {
+  draft: OnboardingDraft;
+  update: (patch: Partial<OnboardingDraft>) => void;
+}
+
+const defaultDraft: OnboardingDraft = {
+  username: '',
+  displayName: '',
+  avatarEmoji: '🙂',
+  focusTimerEnabled: true,
+  moodTrackingEnabled: false,
+  periodTrackingEnabled: false,
+  periodLastStart: null,
+  periodCycleLength: 28,
+};
+
+const OnboardingContext = createContext<OnboardingContextValue | undefined>(undefined);
+
+export function OnboardingProvider({ children }: { children: React.ReactNode }) {
+  const [draft, setDraft] = useState<OnboardingDraft>(defaultDraft);
+
+  const value = useMemo<OnboardingContextValue>(
+    () => ({
+      draft,
+      update: (patch) => setDraft((prev) => ({ ...prev, ...patch })),
+    }),
+    [draft]
+  );
+
+  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
+}
+
+export function useOnboarding() {
+  const ctx = useContext(OnboardingContext);
+  if (!ctx) throw new Error('useOnboarding must be used within OnboardingProvider');
+  return ctx;
+}
