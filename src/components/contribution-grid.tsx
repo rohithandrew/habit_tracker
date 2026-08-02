@@ -5,11 +5,16 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { buildContributionMap, contributionLevel, toDateKey } from '@/lib/habits';
+import { useSettings } from '@/lib/settings-context';
 import type { HabitLog } from '@/lib/types';
 
 const CELL_SIZE = 12;
 const CELL_GAP = 3;
 const WEEKS = 14;
+
+// Okabe-Ito inspired blue -> orange sequential scale, safe for the common
+// forms of color-blindness (unlike a green/red or purple-intensity-only scale).
+const COLOR_BLIND_SCALE = ['#E0E0E0', '#A6CEE3', '#3E8DC4', '#F2A541', '#D9534F'] as const;
 
 function buildColumns(weeks: number): Date[][] {
   const today = new Date();
@@ -39,17 +44,26 @@ export function ContributionGrid({
   onSelectDate: (dateKey: string) => void;
 }) {
   const theme = useTheme();
+  const { colorBlindPalette } = useSettings();
   const columns = useMemo(() => buildColumns(WEEKS), []);
   const contributionMap = useMemo(() => buildContributionMap(logs), [logs]);
   const todayKey = toDateKey(new Date());
 
-  const levelColors: Record<0 | 1 | 2 | 3 | 4, string> = {
-    0: theme.backgroundSelected,
-    1: theme.primarySoft,
-    2: '#B7C6FF',
-    3: theme.primary,
-    4: '#4C63C7',
-  };
+  const levelColors: Record<0 | 1 | 2 | 3 | 4, string> = colorBlindPalette
+    ? {
+        0: theme.backgroundSelected,
+        1: COLOR_BLIND_SCALE[1],
+        2: COLOR_BLIND_SCALE[2],
+        3: COLOR_BLIND_SCALE[3],
+        4: COLOR_BLIND_SCALE[4],
+      }
+    : {
+        0: theme.backgroundSelected,
+        1: theme.primarySoft,
+        2: '#B7C6FF',
+        3: theme.primary,
+        4: '#4C63C7',
+      };
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
@@ -81,13 +95,10 @@ export function ContributionGrid({
 
 export function ContributionLegend() {
   const theme = useTheme();
-  const levelColors = [
-    theme.backgroundSelected,
-    theme.primarySoft,
-    '#B7C6FF',
-    theme.primary,
-    '#4C63C7',
-  ];
+  const { colorBlindPalette } = useSettings();
+  const levelColors = colorBlindPalette
+    ? [theme.backgroundSelected, ...COLOR_BLIND_SCALE.slice(1)]
+    : [theme.backgroundSelected, theme.primarySoft, '#B7C6FF', theme.primary, '#4C63C7'];
   return (
     <View style={styles.legend}>
       <ThemedText type="small" themeColor="textSecondary">

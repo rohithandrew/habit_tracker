@@ -3,16 +3,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
 import { ContributionGrid, ContributionLegend } from '@/components/contribution-grid';
 import { HabitFormModal } from '@/components/habit-form-modal';
 import type { HabitFormValues } from '@/components/habit-form';
+import { StickyNotesCanvas } from '@/components/sticky-notes-canvas';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WeeklyHabitRow } from '@/components/weekly-habit-row';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { fromDateKey, isHabitEffectivelyArchived, isPastSchedule } from '@/lib/habits';
+import { fromDateKey, isHabitEffectivelyArchived, isPastSchedule, toDateKey } from '@/lib/habits';
 import {
   createHabit,
   fetchHabitLogs,
@@ -21,7 +23,11 @@ import {
   toggleHabitLog,
 } from '@/lib/habits-api';
 import { useAuth } from '@/lib/auth-context';
-import type { Habit, HabitLog } from '@/lib/types';
+import { fetchFriendships, fetchProfilesByIds } from '@/lib/friends-api';
+import { syncHabitReminder } from '@/lib/notifications';
+import { fetchStickyNotes } from '@/lib/sticky-notes-api';
+import { computeCurrentStreak, reachedMilestone } from '@/lib/streaks';
+import type { Habit, HabitLog, PublicProfile, StickyNote } from '@/lib/types';
 
 const CONTRIBUTION_HISTORY_DAYS = 14 * 7;
 
@@ -32,6 +38,8 @@ export default function HomeScreen() {
 
   const [habits, setHabits] = useState<Habit[]>([]);
   const [logs, setLogs] = useState<HabitLog[]>([]);
+  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
+  const [friendProfiles, setFriendProfiles] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -48,9 +56,11 @@ export default function HomeScreen() {
       try {
         const since = new Date();
         since.setDate(since.getDate() - CONTRIBUTION_HISTORY_DAYS);
-        const [fetchedHabits, fetchedLogs] = await Promise.all([
+        const [fetchedHabits, fetchedLogs, notes, friendships] = await Promise.all([
           fetchHabits(session.user.id),
           fetchHabitLogs(session.user.id, since),
+          fetchStickyNotes(session.user.id, 'habit_grid'),
+          fetchFriendships(session.user.id),
         ]);
 
         const toArchive = fetchedHabits.filter((h) => !h.archived && isPastSchedule(h.schedule_data));
@@ -61,6 +71,12 @@ export default function HomeScreen() {
 
         setHabits(fetchedHabits);
         setLogs(fetchedLogs);
+        setStickyNotes(notes);
+
+        const acceptedIds = friendships
+          .filter((f) => f.status === 'accepted')
+          .map((f) => (f.requester_id === session.user.id ? f.addressee_id : f.requester_id));
+        setFriendProfiles(acceptedIds.length > 0 ? await fetchProfilesByIds(acceptedIds) : []);
       } catch (err) {
         console.error(err);
         Alert.alert('Could not load your habits', err instanceof Error ? err.message : String(err));
@@ -103,6 +119,16 @@ export default function HomeScreen() {
 
     try {
       await toggleHabitLog(session.user.id, habit.id, dateKey, currentlyDone);
+      if (!currentlyDone && dateKey === toDateKey(new Date())) {
+        const streak = computeCurrentStreak(habit, [
+          ...logs.filter((l) => !(l.habit_id === habit.id && l.date === dateKey)),
+          { id: 'x', habit_id: habit.id, user_id: session.user.id, date: dateKey, status: 'done', completed_at: null },
+        ]);
+        const milestone = reachedMilestone(streak);
+        if (milestone) {
+          Alert.alert(`${milestone}-day streak! 🔥`, `"${habit.title}" — ${milestone} days in a row.`);
+        }
+      }
     } catch (err) {
       setLogs(previousLogs);
       Alert.alert('Could not update', err instanceof Error ? err.message : String(err));
@@ -114,6 +140,7 @@ export default function HomeScreen() {
     setCreating(true);
     try {
       const habit = await createHabit(session.user.id, values);
+      await syncHabitReminder(habit);
       setHabits((prev) => [...prev, habit]);
       setShowAddModal(false);
     } catch (err) {
@@ -123,12 +150,16 @@ export default function HomeScreen() {
     }
   }
 
+  if (!session) return null;
+
   const activeHabits = habits.filter((h) => !isHabitEffectivelyArchived(h));
   const endedHabits = habits.filter((h) => isHabitEffectivelyArchived(h));
 
   const selectedDayCount = selectedDateKey
     ? logs.filter((l) => l.date === selectedDateKey && l.status === 'done').length
     : 0;
+
+  const friendIdsWithNotes = new Set(stickyNotes.map((n) => n.author_id));
 
   return (
     <ThemedView style={styles.container}>
@@ -155,9 +186,34 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
+          {friendProfiles.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.friendStrip}
+              contentContainerStyle={styles.friendStripContent}>
+              {friendProfiles.map((f) => (
+                <Pressable key={f.id} onPress={() => router.push(`/friend/${f.id}`)} style={styles.friendAvatar}>
+                  <Avatar emoji={f.avatar_emoji} size={44} />
+                  {friendIdsWithNotes.has(f.id) ? (
+                    <View style={[styles.friendDot, { backgroundColor: theme.danger, borderColor: theme.background }]} />
+                  ) : null}
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : null}
+
           <Card>
             <ThemedText type="smallBold">Your activity</ThemedText>
-            <ContributionGrid logs={logs} onSelectDate={setSelectedDateKey} />
+            <StickyNotesCanvas
+              notes={stickyNotes}
+              currentUserId={session.user.id}
+              ownerId={session.user.id}
+              targetType="habit_grid"
+              canAuthorNote={false}
+              onNotesChange={setStickyNotes}>
+              <ContributionGrid logs={logs} onSelectDate={setSelectedDateKey} />
+            </StickyNotesCanvas>
             <ContributionLegend />
             {selectedDateKey ? (
               <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two }}>
@@ -254,6 +310,18 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 24 },
   addButton: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Radius.pill },
   emptyState: { paddingVertical: Spacing.three },
+  friendStrip: { marginBottom: Spacing.three, flexGrow: 0 },
+  friendStripContent: { gap: Spacing.three, paddingRight: Spacing.two },
+  friendAvatar: { position: 'relative' },
+  friendDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: Radius.pill,
+    borderWidth: 2,
+  },
   endedHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   endedRow: {
     flexDirection: 'row',

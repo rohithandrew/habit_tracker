@@ -6,6 +6,8 @@ import { MonthCalendar } from '@/components/month-calendar';
 import { ScheduleTypePicker } from '@/components/schedule-type-picker';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { TimePicker } from '@/components/time-picker';
+import { ToggleRow } from '@/components/toggle-row';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { toDateKey, weekdayLabel } from '@/lib/habits';
@@ -18,6 +20,7 @@ export interface HabitFormValues {
   colorTag: string;
   scheduleType: ScheduleType;
   scheduleData: ScheduleData;
+  reminderTime: string | null;
 }
 
 const ALL_WEEKDAYS: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
@@ -60,6 +63,8 @@ export function HabitForm({
   const [scheduleData, setScheduleData] = useState<ScheduleData>(
     initialValues?.scheduleData ?? defaultScheduleData(scheduleType, todayKey)
   );
+  const [reminderEnabled, setReminderEnabled] = useState(Boolean(initialValues?.reminderTime));
+  const [reminderTime, setReminderTime] = useState(initialValues?.reminderTime ?? '09:00');
 
   function changeScheduleType(type: ScheduleType) {
     setScheduleType(type);
@@ -227,11 +232,38 @@ export function HabitForm({
         </View>
       )}
 
+      <View>
+        <ThemedText type="smallBold" style={styles.label}>
+          Reminder
+        </ThemedText>
+        <ToggleRow
+          emoji="🔔"
+          title="Daily reminder"
+          description="A local notification at a time you pick."
+          value={reminderEnabled}
+          onValueChange={setReminderEnabled}
+        />
+        {reminderEnabled && (
+          <View style={{ marginTop: Spacing.two }}>
+            <TimePicker value={reminderTime} onChange={setReminderTime} />
+          </View>
+        )}
+      </View>
+
       <Button
         label={submitLabel}
         disabled={!canSubmit}
         loading={submitting}
-        onPress={() => onSubmit({ title: title.trim(), emoji, colorTag, scheduleType, scheduleData })}
+        onPress={() =>
+          onSubmit({
+            title: title.trim(),
+            emoji,
+            colorTag,
+            scheduleType,
+            scheduleData,
+            reminderTime: reminderEnabled ? reminderTime : null,
+          })
+        }
       />
     </View>
   );

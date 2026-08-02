@@ -9,8 +9,10 @@ import { ThemedView } from '@/components/themed-view';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { syncHabitReminder } from '@/lib/notifications';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { supabase } from '@/lib/supabase';
+import type { Habit } from '@/lib/types';
 
 const TEMPLATES: { title: string; emoji: string }[] = [
   { title: 'Drink water', emoji: '💧' },
@@ -59,14 +61,19 @@ export default function FirstHabitScreen() {
       });
     }
 
-    const { error: habitError } = await supabase.from('habits').insert({
-      user_id: session.user.id,
-      title: values.title,
-      emoji: values.emoji,
-      color_tag: values.colorTag,
-      schedule_type: values.scheduleType,
-      schedule_data: values.scheduleData,
-    });
+    const { data: createdHabit, error: habitError } = await supabase
+      .from('habits')
+      .insert({
+        user_id: session.user.id,
+        title: values.title,
+        emoji: values.emoji,
+        color_tag: values.colorTag,
+        schedule_type: values.scheduleType,
+        schedule_data: values.scheduleData,
+        reminder_time: values.reminderTime,
+      })
+      .select('*')
+      .single();
 
     setSubmitting(false);
 
@@ -75,6 +82,7 @@ export default function FirstHabitScreen() {
       return;
     }
 
+    await syncHabitReminder(createdHabit as Habit);
     await refreshProfile();
     router.replace('/(tabs)');
   }

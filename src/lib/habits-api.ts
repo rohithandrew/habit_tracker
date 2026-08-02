@@ -51,6 +51,7 @@ export async function createHabit(userId: string, values: HabitFormValues): Prom
       color_tag: values.colorTag,
       schedule_type: values.scheduleType,
       schedule_data: values.scheduleData,
+      reminder_time: values.reminderTime,
     })
     .select('*')
     .single();
@@ -67,6 +68,7 @@ export async function updateHabit(habitId: string, values: HabitFormValues): Pro
       color_tag: values.colorTag,
       schedule_type: values.scheduleType,
       schedule_data: values.scheduleData,
+      reminder_time: values.reminderTime,
     })
     .eq('id', habitId)
     .select('*')

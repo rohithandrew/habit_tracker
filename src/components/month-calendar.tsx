@@ -11,11 +11,13 @@ export type MonthCalendarProps = {
   onSelectDate: (dateKey: string) => void;
   minDate?: string;
   maxDate?: string;
+  /** Optional background tint per date, e.g. for period/fertile/predicted day coding. */
+  dayColor?: (dateKey: string) => string | undefined;
 };
 
 const WEEKDAY_HEADERS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate }: MonthCalendarProps) {
+export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate, dayColor }: MonthCalendarProps) {
   const theme = useTheme();
   const initial = selectedDate ? new Date(selectedDate) : new Date();
   const [viewDate, setViewDate] = useState(new Date(initial.getFullYear(), initial.getMonth(), 1));
@@ -63,6 +65,7 @@ export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate }: 
           const key = toDateKey(date);
           const isSelected = key === selectedDate;
           const isDisabled = (minDate ? key < minDate : false) || (maxDate ? key > maxDate : false);
+          const tint = dayColor?.(key);
           return (
             <Pressable
               key={key}
@@ -71,11 +74,10 @@ export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate }: 
               style={[
                 styles.dayCell,
                 styles.dayCellButton,
-                isSelected && { backgroundColor: theme.primary },
+                tint && { backgroundColor: tint },
+                isSelected && { borderWidth: 2, borderColor: theme.text },
               ]}>
-              <ThemedText
-                type="small"
-                style={[isDisabled && { opacity: 0.3 }, isSelected && { color: '#fff' }]}>
+              <ThemedText type="small" style={[isDisabled && { opacity: 0.3 }, tint && { color: '#fff' }]}>
                 {date.getDate()}
               </ThemedText>
             </Pressable>

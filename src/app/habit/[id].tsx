@@ -19,6 +19,8 @@ import {
   fetchLogsForHabit,
   updateHabit,
 } from '@/lib/habits-api';
+import { cancelHabitReminder, syncHabitReminder } from '@/lib/notifications';
+import { computeCurrentStreak } from '@/lib/streaks';
 import type { Habit, HabitLog } from '@/lib/types';
 
 const HISTORY_DAYS = 14 * 7;
@@ -63,6 +65,7 @@ export default function HabitDetailScreen() {
     setSaving(true);
     try {
       const updated = await updateHabit(habit.id, values);
+      await syncHabitReminder(updated);
       setHabit(updated);
       navigation.setOptions({ title: updated.title });
       setShowEditModal(false);
@@ -86,6 +89,7 @@ export default function HabitDetailScreen() {
           onPress: async () => {
             try {
               await deleteHabit(habit.id);
+              await cancelHabitReminder(habit.id);
               router.back();
             } catch (err) {
               Alert.alert('Could not delete', err instanceof Error ? err.message : String(err));
@@ -108,6 +112,7 @@ export default function HabitDetailScreen() {
 
   const doneCount = logs.filter((l) => l.status === 'done').length;
   const ended = isHabitEffectivelyArchived(habit);
+  const streak = computeCurrentStreak(habit, logs);
 
   return (
     <ThemedView style={styles.container}>
@@ -128,14 +133,22 @@ export default function HabitDetailScreen() {
             </View>
           </View>
 
-          <Card style={styles.statsCard}>
-            <ThemedText type="title" style={styles.statNumber}>
-              {doneCount}
-            </ThemedText>
-            <ThemedText themeColor="textSecondary">
-              times completed in the last {Math.round(HISTORY_DAYS / 7)} weeks
-            </ThemedText>
-          </Card>
+          <View style={styles.statsRow}>
+            <Card style={[styles.statsCard, { flex: 1 }]}>
+              <ThemedText type="title" style={styles.statNumber}>
+                {streak}
+              </ThemedText>
+              <ThemedText themeColor="textSecondary">day streak {streak > 0 ? '🔥' : ''}</ThemedText>
+            </Card>
+            <Card style={[styles.statsCard, { flex: 1 }]}>
+              <ThemedText type="title" style={styles.statNumber}>
+                {doneCount}
+              </ThemedText>
+              <ThemedText themeColor="textSecondary">
+                in last {Math.round(HISTORY_DAYS / 7)} weeks
+              </ThemedText>
+            </Card>
+          </View>
 
           <Card style={{ marginTop: Spacing.three }}>
             <ThemedText type="smallBold">History</ThemedText>
@@ -165,6 +178,7 @@ export default function HabitDetailScreen() {
           colorTag: habit.color_tag,
           scheduleType: habit.schedule_type,
           scheduleData: habit.schedule_data,
+          reminderTime: habit.reminder_time ? habit.reminder_time.slice(0, 5) : null,
         }}
         onClose={() => setShowEditModal(false)}
         onSubmit={handleSave}
@@ -194,6 +208,7 @@ const styles = StyleSheet.create({
   },
   icon: { fontSize: 26 },
   title: { fontSize: 22 },
+  statsRow: { flexDirection: 'row', gap: Spacing.three },
   statsCard: { alignItems: 'center', gap: 2 },
   statNumber: { fontSize: 36 },
   actions: { gap: Spacing.two, marginTop: Spacing.three },

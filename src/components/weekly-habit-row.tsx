@@ -11,6 +11,7 @@ import {
   scheduleLabel,
   toDateKey,
 } from '@/lib/habits';
+import { computeCurrentStreak } from '@/lib/streaks';
 import type { Habit, HabitLog } from '@/lib/types';
 
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -38,6 +39,8 @@ export function WeeklyHabitRow({
         } this week`
       : scheduleLabel(habit.schedule_data);
 
+  const streak = computeCurrentStreak(habit, logs);
+
   return (
     <Pressable
       onPress={() => router.push(`/habit/${habit.id}`)}
@@ -47,9 +50,16 @@ export function WeeklyHabitRow({
       </View>
 
       <View style={styles.info}>
-        <ThemedText type="smallBold" numberOfLines={1}>
-          {habit.title}
-        </ThemedText>
+        <View style={styles.titleRow}>
+          <ThemedText type="smallBold" numberOfLines={1} style={{ flexShrink: 1 }}>
+            {habit.title}
+          </ThemedText>
+          {streak > 0 ? (
+            <ThemedText type="small" style={styles.streakBadge}>
+              🔥{streak}
+            </ThemedText>
+          ) : null}
+        </View>
         <ThemedText type="small" themeColor="textSecondary">
           {scheduleText}
         </ThemedText>
@@ -105,6 +115,8 @@ const styles = StyleSheet.create({
   },
   icon: { fontSize: 18 },
   info: { flex: 1, gap: 2, minWidth: 90 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  streakBadge: { fontSize: 12 },
   days: { flexDirection: 'row', gap: 4 },
   dayCircle: {
     width: 26,

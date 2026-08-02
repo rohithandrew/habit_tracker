@@ -2,29 +2,39 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { ActivityIndicator, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { configureNotificationHandler } from '@/lib/notifications';
+import { SettingsProvider } from '@/lib/settings-context';
 
 SplashScreen.preventAutoHideAsync();
+configureNotificationHandler();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  return (
+    <SettingsProvider>
+      <AuthProvider>
+        <ThemedRootNavigator />
+      </AuthProvider>
+    </SettingsProvider>
+  );
+}
+
+function ThemedRootNavigator() {
+  const scheme = useResolvedScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
+    <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <RootNavigator />
     </ThemeProvider>
   );
 }
 
 function RootNavigator() {
   const { loading } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const theme = useTheme();
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync();
@@ -47,6 +57,18 @@ function RootNavigator() {
       <Stack.Screen
         name="habit/[id]"
         options={{ headerShown: true, headerBackTitle: 'Back', title: 'Habit' }}
+      />
+      <Stack.Screen
+        name="friend/[id]"
+        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Friend' }}
+      />
+      <Stack.Screen
+        name="timer/history"
+        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Focus history' }}
+      />
+      <Stack.Screen
+        name="mood/period"
+        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Period cycle' }}
       />
     </Stack>
   );
