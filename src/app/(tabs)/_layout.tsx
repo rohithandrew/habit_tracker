@@ -78,10 +78,7 @@ export default function TabsLayout() {
         name="friends"
         options={{ title: 'Friends', tabBarIcon: () => <TabIcon emoji="🧑‍🤝‍🧑" /> }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{ title: 'Profile', tabBarIcon: () => <TabIcon emoji="⚙️" /> }}
-      />
+      <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
     </>
   );

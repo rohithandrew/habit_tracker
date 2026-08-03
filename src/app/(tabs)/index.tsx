@@ -25,7 +25,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { fetchFriendships, fetchProfilesByIds } from '@/lib/friends-api';
 import { syncHabitReminder } from '@/lib/notifications';
-import { fetchStickyNotes } from '@/lib/sticky-notes-api';
+import { fetchStickyNotes, markStickyNoteRead } from '@/lib/sticky-notes-api';
 import { computeCurrentStreak, reachedMilestone } from '@/lib/streaks';
 import type { Habit, HabitLog, PublicProfile, StickyNote } from '@/lib/types';
 
@@ -71,6 +71,16 @@ export default function HomeScreen() {
         setHabits(fetchedHabits);
         setLogs(fetchedLogs);
         setStickyNotes(notes);
+
+        // Mark this visit's unread notes read so their author's avatar stops showing
+        // in the strip starting next visit — the note text is already visible on the
+        // pin itself, so seeing it here counts as having read it.
+        const unread = notes.filter((n) => n.author_id !== session.user.id && !n.read);
+        if (unread.length > 0) {
+          Promise.all(unread.map((n) => markStickyNoteRead(n.id))).catch(() => {
+            // best-effort; a failed read-marking isn't worth surfacing to the user
+          });
+        }
 
         const acceptedIds = friendships
           .filter((f) => f.status === 'accepted')
@@ -154,7 +164,8 @@ export default function HomeScreen() {
   const activeHabits = habits.filter((h) => !isHabitEffectivelyArchived(h));
   const endedHabits = habits.filter((h) => isHabitEffectivelyArchived(h));
 
-  const friendIdsWithNotes = new Set(stickyNotes.map((n) => n.author_id));
+  const friendIdsWithUnreadNotes = new Set(stickyNotes.filter((n) => !n.read).map((n) => n.author_id));
+  const friendsWithUnreadNotes = friendProfiles.filter((f) => friendIdsWithUnreadNotes.has(f.id));
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
@@ -174,7 +185,9 @@ export default function HomeScreen() {
               <ThemedText type="title" style={styles.headerTitle}>
                 {greeting}, {firstName}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">{dateLabel}</ThemedText>
+              <ThemedText themeColor="textSecondary" style={styles.dateLabel}>
+                {dateLabel}
+              </ThemedText>
             </View>
             <Pressable onPress={() => router.push('/(tabs)/profile')}>
               <Avatar avatarKey={profile?.avatar_emoji} size={52} />
@@ -185,18 +198,16 @@ export default function HomeScreen() {
             <FocusCarousel />
           </View>
 
-          {friendProfiles.length > 0 ? (
+          {friendsWithUnreadNotes.length > 0 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.friendStrip}
               contentContainerStyle={styles.friendStripContent}>
-              {friendProfiles.map((f) => (
+              {friendsWithUnreadNotes.map((f) => (
                 <Pressable key={f.id} onPress={() => router.push(`/friend/${f.id}`)} style={styles.friendAvatar}>
                   <Avatar avatarKey={f.avatar_emoji} size={44} />
-                  {friendIdsWithNotes.has(f.id) ? (
-                    <View style={[styles.friendDot, { backgroundColor: theme.danger, borderColor: theme.background }]} />
-                  ) : null}
+                  <View style={[styles.friendDot, { backgroundColor: theme.danger, borderColor: theme.background }]} />
                 </Pressable>
               ))}
             </ScrollView>
@@ -206,7 +217,7 @@ export default function HomeScreen() {
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Weekly Habits
             </ThemedText>
-            <Pressable onPress={() => setShowAddModal(true)} hitSlop={8}>
+            <Pressable onPress={() => setShowAddModal(true)} hitSlop={8} style={{ marginRight: Spacing.two }}>
               <ThemedText type="smallBold">+ Add habit</ThemedText>
             </Pressable>
           </View>
@@ -297,6 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTitle: { fontSize: 26, fontWeight: '700' },
+  dateLabel: { fontWeight: '400', fontSize: 15 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',

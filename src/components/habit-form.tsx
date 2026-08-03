@@ -55,7 +55,7 @@ export function HabitForm({
   const todayKey = toDateKey(new Date());
 
   const [title, setTitle] = useState(initialValues?.title ?? '');
-  const [emoji, setEmoji] = useState(initialValues?.emoji ?? HABIT_EMOJIS[0]);
+  const [emoji, setEmoji] = useState(initialValues?.emoji ?? '');
   const [colorTag] = useState(
     initialValues?.colorTag ?? HABIT_COLORS[Math.floor(Math.random() * HABIT_COLORS.length)]
   );
@@ -90,7 +90,7 @@ export function HabitForm({
 
   return (
     <View style={styles.form}>
-      <TextField label="Title" value={title} onChangeText={setTitle} placeholder="e.g. Drink water" />
+      <TextField label="Title" value={title} onChangeText={setTitle} placeholder="e.g. Meditate 🧘" />
 
       <View>
         <ThemedText type="smallBold" style={styles.label}>
@@ -102,7 +102,7 @@ export function HabitForm({
             return (
               <Pressable
                 key={e}
-                onPress={() => setEmoji(e)}
+                onPress={() => setEmoji(selected ? '' : e)}
                 style={[
                   styles.emojiCell,
                   { backgroundColor: selected ? theme.primary : theme.backgroundSelected },
@@ -112,12 +112,6 @@ export function HabitForm({
             );
           })}
         </View>
-        <TextField
-          value={emoji}
-          onChangeText={setEmoji}
-          placeholder="Or type any emoji from your keyboard"
-          style={styles.emojiInput}
-        />
       </View>
 
       <View>
@@ -267,7 +261,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emojiText: { fontSize: 22 },
-  emojiInput: { marginTop: Spacing.two },
   dayChip: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,

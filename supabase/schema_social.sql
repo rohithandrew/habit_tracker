@@ -376,9 +376,12 @@ create table if not exists public.sticky_notes (
   position_y real not null default 0.5,
   color text not null default '#FFE58A',
   text text not null,
+  read boolean not null default false,
   created_at timestamptz not null default now(),
   check (author_id <> owner_id)
 );
+
+alter table public.sticky_notes add column if not exists read boolean not null default false;
 
 create index if not exists sticky_notes_owner_idx on public.sticky_notes(owner_id, target_type);
 create index if not exists sticky_notes_author_idx on public.sticky_notes(author_id);
@@ -420,6 +423,13 @@ drop policy if exists "Authors edit their own note within 15 minutes" on public.
 create policy "Authors edit their own note within 15 minutes" on public.sticky_notes
   for update using (author_id = auth.uid() and created_at > now() - interval '15 minutes')
   with check (author_id = auth.uid());
+
+-- Lets the owner mark a friend's note as read once they've seen it on their own
+-- canvas. The client only ever sends {read: true} through this path.
+drop policy if exists "Owner can mark a note read" on public.sticky_notes;
+create policy "Owner can mark a note read" on public.sticky_notes
+  for update using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
 
 drop policy if exists "Owner or recent author can delete a note" on public.sticky_notes;
 create policy "Owner or recent author can delete a note" on public.sticky_notes

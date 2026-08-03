@@ -8,7 +8,7 @@ import type { ScheduleType } from '@/lib/types';
 const OPTIONS: { type: ScheduleType; label: string }[] = [
   { type: 'daily', label: 'Every day' },
   { type: 'weekdays', label: 'Weekdays' },
-  { type: 'x_per_week', label: 'X / week' },
+  { type: 'x_per_week', label: 'Per week' },
   { type: 'single_day', label: 'Single day' },
   { type: 'date_range', label: 'Date range' },
 ];
@@ -33,7 +33,7 @@ export function ScheduleTypePicker({
               styles.chip,
               { backgroundColor: selected ? theme.primary : theme.backgroundSelected },
             ]}>
-            <ThemedText type="small" style={selected ? { color: '#fff' } : undefined}>
+            <ThemedText type="small" numberOfLines={1} style={selected ? { color: '#fff' } : undefined}>
               {option.label}
             </ThemedText>
           </Pressable>

@@ -57,7 +57,7 @@ export function WeeklyHabitRow({
             </ThemedText>
           ) : null}
         </View>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="small" themeColor="textSecondary" style={styles.scheduleText}>
           {scheduleText}
         </ThemedText>
       </View>
@@ -116,9 +116,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, flexShrink: 1 },
   icon: { fontSize: 16 },
   streakBadge: { fontSize: 12 },
+  scheduleText: { fontWeight: '500', fontSize: 14 },
   labels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.one },
-  dayLabel: { width: 30, textAlign: 'center' },
-  days: { flexDirection: 'row', justifyContent: 'space-between' },
+  dayLabel: { width: 30, textAlign: 'center', fontSize: 14, fontWeight: '400' },
+  days: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -Spacing.one },
   dayCircle: {
     width: 34,
     height: 34,

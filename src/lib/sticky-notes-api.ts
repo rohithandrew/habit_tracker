@@ -58,3 +58,8 @@ export async function deleteStickyNote(noteId: string): Promise<void> {
   const { error } = await supabase.from('sticky_notes').delete().eq('id', noteId);
   if (error) throw error;
 }
+
+export async function markStickyNoteRead(noteId: string): Promise<void> {
+  const { error } = await supabase.from('sticky_notes').update({ read: true }).eq('id', noteId);
+  if (error) throw error;
+}

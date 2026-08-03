@@ -117,6 +117,7 @@ export interface StickyNote {
   position_y: number;
   color: string;
   text: string;
+  read: boolean;
   created_at: string;
 }
 

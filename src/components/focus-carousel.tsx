@@ -23,9 +23,9 @@ export function FocusCarousel() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
-        style={{ borderRadius: Radius.xl }}>
+        style={{ borderRadius: Radius.xl, overflow: 'hidden' }}>
         {FOCUS_CAROUSEL_IMAGES.map((source, i) => (
-          <Image key={i} source={source} style={{ width, height: HEIGHT, borderRadius: Radius.xl }} contentFit="cover" />
+          <Image key={i} source={source} style={{ width, height: HEIGHT }} contentFit="cover" />
         ))}
       </ScrollView>
 
@@ -44,7 +44,7 @@ export function FocusCarousel() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { position: 'relative' },
+  wrapper: { position: 'relative', overflow: 'hidden' },
   dots: {
     position: 'absolute',
     bottom: Spacing.two,
