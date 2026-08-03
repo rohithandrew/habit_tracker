@@ -11,6 +11,12 @@ export type ThemedTextProps = TextProps & {
 export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
   const theme = useTheme();
 
+  // A custom fontSize (e.g. for an emoji icon) without its own lineHeight would
+  // otherwise inherit the type's lineHeight, which is tuned for that type's own
+  // fontSize and clips taller glyphs — so let it fall back to a natural one instead.
+  const flat = StyleSheet.flatten(style);
+  const clearsLineHeight = flat?.fontSize != null && flat.lineHeight == null;
+
   return (
     <Text
       style={[
@@ -23,6 +29,7 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
+        clearsLineHeight && { lineHeight: undefined },
         style,
       ]}
       {...rest}

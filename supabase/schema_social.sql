@@ -318,8 +318,8 @@ create policy "Friends can view shared timer sessions" on public.timer_sessions
 -- ============================================================
 -- mood_entries
 -- Friends never see `note`, even when mood sharing is on: they can only
--- query the mood_entries_public view below, which excludes it. There is
--- no friend-facing RLS policy on the base table at all.
+-- read mood data via get_shared_mood_entries() below, which excludes it.
+-- There is no friend-facing RLS policy on the base table at all.
 -- ============================================================
 create table if not exists public.mood_entries (
   id uuid primary key default gen_random_uuid(),
@@ -339,15 +339,29 @@ drop policy if exists "Users manage their own mood entries" on public.mood_entri
 create policy "Users manage their own mood entries" on public.mood_entries
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create or replace view public.mood_entries_public
-with (security_invoker = true)
-as
-  select id, user_id, date, mood, created_at
-  from public.mood_entries;
-
+-- Friends never get a base-table SELECT policy on mood_entries — that would let
+-- them query the `note` column directly via the REST API, since Supabase grants
+-- full table privileges to `authenticated` and relies on RLS alone for filtering.
+-- Instead they must go through this function, which returns only safe columns.
 drop policy if exists "Friends can view shared mood entries" on public.mood_entries;
-create policy "Friends can view shared mood entries" on public.mood_entries
-  for select using (public.is_friend_permitted(user_id, 'can_view_mood'));
+drop view if exists public.mood_entries_public;
+
+create or replace function public.get_shared_mood_entries(target_owner uuid, since_date date)
+returns table (id uuid, user_id uuid, date date, mood smallint, created_at timestamptz)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select m.id, m.user_id, m.date, m.mood, m.created_at
+  from public.mood_entries m
+  where m.user_id = target_owner
+    and m.date >= since_date
+    and public.is_friend_permitted(target_owner, 'can_view_mood')
+  order by m.date asc;
+$$;
+
+grant execute on function public.get_shared_mood_entries(uuid, date) to authenticated;
 
 -- ============================================================
 -- sticky_notes

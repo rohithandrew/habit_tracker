@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
-import { ContributionGrid, ContributionLegend } from '@/components/contribution-grid';
+import { FocusCarousel } from '@/components/focus-carousel';
 import { HabitFormModal } from '@/components/habit-form-modal';
 import type { HabitFormValues } from '@/components/habit-form';
 import { StickyNotesCanvas } from '@/components/sticky-notes-canvas';
@@ -14,7 +14,7 @@ import { ThemedView } from '@/components/themed-view';
 import { WeeklyHabitRow } from '@/components/weekly-habit-row';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { fromDateKey, isHabitEffectivelyArchived, isPastSchedule, toDateKey } from '@/lib/habits';
+import { isHabitEffectivelyArchived, isPastSchedule, toDateKey } from '@/lib/habits';
 import {
   createHabit,
   fetchHabitLogs,
@@ -45,7 +45,6 @@ export default function HomeScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [endedExpanded, setEndedExpanded] = useState(false);
-  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
 
   const load = useCallback(
     async (isRefresh = false) => {
@@ -155,11 +154,13 @@ export default function HomeScreen() {
   const activeHabits = habits.filter((h) => !isHabitEffectivelyArchived(h));
   const endedHabits = habits.filter((h) => isHabitEffectivelyArchived(h));
 
-  const selectedDayCount = selectedDateKey
-    ? logs.filter((l) => l.date === selectedDateKey && l.status === 'done').length
-    : 0;
-
   const friendIdsWithNotes = new Set(stickyNotes.map((n) => n.author_id));
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
+  const today = new Date();
+  const dateLabel = `${today.toLocaleDateString(undefined, { weekday: 'long' })}, ${today.getDate()} ${today.toLocaleDateString(undefined, { month: 'long' })}, ${today.getFullYear()}`;
+  const firstName = (profile?.display_name ?? '').split(' ')[0] || 'there';
 
   return (
     <ThemedView style={styles.container}>
@@ -169,22 +170,18 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}>
           <View style={styles.header}>
-            <View>
-              <ThemedText type="small" themeColor="textSecondary">
-                Welcome back
+            <View style={{ flexShrink: 1 }}>
+              <ThemedText type="title" style={styles.headerTitle}>
+                {greeting}, {firstName}
               </ThemedText>
-              <ThemedText type="subtitle" style={styles.headerTitle}>
-                {profile?.display_name ? profile.display_name : 'Your habits'}
-              </ThemedText>
+              <ThemedText themeColor="textSecondary">{dateLabel}</ThemedText>
             </View>
-            <Pressable
-              onPress={() => setShowAddModal(true)}
-              style={[styles.addButton, { backgroundColor: theme.primary }]}>
-              <ThemedText type="smallBold" style={{ color: '#fff' }}>
-                + Add habit
-              </ThemedText>
+            <Pressable onPress={() => router.push('/(tabs)/profile')}>
+              <Avatar emoji={profile?.avatar_emoji ?? '🙂'} size={52} />
             </Pressable>
           </View>
+
+          <FocusCarousel />
 
           {friendProfiles.length > 0 ? (
             <ScrollView
@@ -203,34 +200,22 @@ export default function HomeScreen() {
             </ScrollView>
           ) : null}
 
-          <Card>
-            <ThemedText type="smallBold">Your activity</ThemedText>
-            <StickyNotesCanvas
-              notes={stickyNotes}
-              currentUserId={session.user.id}
-              ownerId={session.user.id}
-              targetType="habit_grid"
-              canAuthorNote={false}
-              onNotesChange={setStickyNotes}>
-              <ContributionGrid logs={logs} onSelectDate={setSelectedDateKey} />
-            </StickyNotesCanvas>
-            <ContributionLegend />
-            {selectedDateKey ? (
-              <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two }}>
-                {fromDateKey(selectedDateKey).toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'short',
-                  day: 'numeric',
-                })}{' '}
-                — {selectedDayCount} habit{selectedDayCount === 1 ? '' : 's'} completed
-              </ThemedText>
-            ) : null}
-          </Card>
-
-          <Card style={{ marginTop: Spacing.three }}>
-            <ThemedText type="smallBold" style={{ marginBottom: Spacing.two }}>
-              This week
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Weekly Habits
             </ThemedText>
+            <Pressable onPress={() => setShowAddModal(true)} hitSlop={8}>
+              <ThemedText type="smallBold">+ Add habit</ThemedText>
+            </Pressable>
+          </View>
+
+          <StickyNotesCanvas
+            notes={stickyNotes}
+            currentUserId={session.user.id}
+            ownerId={session.user.id}
+            targetType="habit_grid"
+            canAuthorNote={false}
+            onNotesChange={setStickyNotes}>
             {loading ? (
               <ThemedText themeColor="textSecondary">Loading…</ThemedText>
             ) : activeHabits.length === 0 ? (
@@ -240,19 +225,21 @@ export default function HomeScreen() {
                 </ThemedText>
               </View>
             ) : (
-              activeHabits.map((habit) => (
-                <WeeklyHabitRow
-                  key={habit.id}
-                  habit={habit}
-                  logs={logs}
-                  onToggleDay={(dateKey, done) => handleToggleDay(habit, dateKey, done)}
-                />
-              ))
+              <View style={{ gap: Spacing.two }}>
+                {activeHabits.map((habit) => (
+                  <WeeklyHabitRow
+                    key={habit.id}
+                    habit={habit}
+                    logs={logs}
+                    onToggleDay={(dateKey, done) => handleToggleDay(habit, dateKey, done)}
+                  />
+                ))}
+              </View>
             )}
-          </Card>
+          </StickyNotesCanvas>
 
           {endedHabits.length > 0 ? (
-            <Card style={{ marginTop: Spacing.three }}>
+            <Card>
               <Pressable
                 style={styles.endedHeader}
                 onPress={() => setEndedExpanded((v) => !v)}>
@@ -300,17 +287,21 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
-  scroll: { paddingBottom: Spacing.six, paddingTop: Spacing.two },
+  scroll: { paddingBottom: Spacing.six, paddingTop: Spacing.two, gap: Spacing.three },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.three,
   },
-  headerTitle: { fontSize: 24 },
-  addButton: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Radius.pill },
+  headerTitle: { fontSize: 30, fontWeight: '700' },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitle: { fontSize: 22 },
   emptyState: { paddingVertical: Spacing.three },
-  friendStrip: { marginBottom: Spacing.three, flexGrow: 0 },
+  friendStrip: { flexGrow: 0 },
   friendStripContent: { gap: Spacing.three, paddingRight: Spacing.two },
   friendAvatar: { position: 'relative' },
   friendDot: {

@@ -39,14 +39,12 @@ export async function upsertMood(
   return data as MoodEntry;
 }
 
-/** Friend-facing: mood level only, via the view that excludes notes entirely. */
+/** Friend-facing: mood level only, via an RPC that excludes notes entirely. */
 export async function fetchFriendMoodHistory(ownerId: string, since: Date) {
-  const { data, error } = await supabase
-    .from('mood_entries_public')
-    .select('*')
-    .eq('user_id', ownerId)
-    .gte('date', toDateKey(since))
-    .order('date', { ascending: true });
+  const { data, error } = await supabase.rpc('get_shared_mood_entries', {
+    target_owner: ownerId,
+    since_date: toDateKey(since),
+  });
   if (error) throw error;
   return (data ?? []) as Omit<MoodEntry, 'note'>[];
 }

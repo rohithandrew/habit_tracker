@@ -14,7 +14,7 @@ import {
 import { computeCurrentStreak } from '@/lib/streaks';
 import type { Habit, HabitLog } from '@/lib/types';
 
-const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function WeeklyHabitRow({
   habit,
@@ -44,16 +44,13 @@ export function WeeklyHabitRow({
   return (
     <Pressable
       onPress={() => router.push(`/habit/${habit.id}`)}
-      style={[styles.row, { borderColor: theme.border }]}>
-      <View style={[styles.iconCircle, { backgroundColor: `${habit.color_tag}33` }]}>
-        <ThemedText style={styles.icon}>{habit.emoji}</ThemedText>
-      </View>
-
-      <View style={styles.info}>
-        <View style={styles.titleRow}>
-          <ThemedText type="smallBold" numberOfLines={1} style={{ flexShrink: 1 }}>
+      style={[styles.row, { backgroundColor: theme.backgroundElement, shadowColor: theme.text }]}>
+      <View style={styles.titleRow}>
+        <View style={styles.titleLeft}>
+          <ThemedText type="smallBold" numberOfLines={1} style={styles.title}>
             {habit.title}
           </ThemedText>
+          <ThemedText style={styles.icon}>{habit.emoji}</ThemedText>
           {streak > 0 ? (
             <ThemedText type="small" style={styles.streakBadge}>
               🔥{streak}
@@ -65,8 +62,16 @@ export function WeeklyHabitRow({
         </ThemedText>
       </View>
 
+      <View style={styles.labels}>
+        {WEEKDAY_LABELS.map((label) => (
+          <ThemedText key={label} type="small" themeColor="textSecondary" style={styles.dayLabel}>
+            {label}
+          </ThemedText>
+        ))}
+      </View>
+
       <View style={styles.days}>
-        {weekDates.map((date, i) => {
+        {weekDates.map((date) => {
           const key = toDateKey(date);
           const eligible = isDateEligible(habit.schedule_data, date);
           const done = doneKeys.has(key);
@@ -82,14 +87,12 @@ export function WeeklyHabitRow({
               style={[
                 styles.dayCircle,
                 {
-                  backgroundColor: done ? habit.color_tag : theme.background,
-                  borderColor: eligible ? habit.color_tag : theme.border,
+                  backgroundColor: done ? theme.primary : 'transparent',
+                  borderColor: done ? theme.primary : theme.border,
                   opacity: eligible ? 1 : 0.35,
                 },
               ]}>
-              <ThemedText type="small" style={done ? styles.doneCheck : undefined}>
-                {done ? '✓' : WEEKDAY_HEADERS[i]}
-              </ThemedText>
+              {done ? <ThemedText style={styles.doneCheck}>✓</ThemedText> : null}
             </Pressable>
           );
         })}
@@ -100,27 +103,25 @@ export function WeeklyHabitRow({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.three,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.xl,
+    padding: Spacing.four,
+    gap: Spacing.three,
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: { fontSize: 18 },
-  info: { flex: 1, gap: 2, minWidth: 90 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  titleLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, marginRight: Spacing.two },
+  title: { fontSize: 18, flexShrink: 1 },
+  icon: { fontSize: 16 },
   streakBadge: { fontSize: 12 },
-  days: { flexDirection: 'row', gap: 4 },
+  labels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.one },
+  dayLabel: { width: 30, textAlign: 'center' },
+  days: { flexDirection: 'row', justifyContent: 'space-between' },
   dayCircle: {
-    width: 26,
-    height: 26,
+    width: 34,
+    height: 34,
     borderRadius: Radius.pill,
     borderWidth: 1.5,
     alignItems: 'center',
