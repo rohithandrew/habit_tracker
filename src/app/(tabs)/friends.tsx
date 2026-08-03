@@ -166,7 +166,7 @@ export default function FriendsScreen() {
               </ThemedText>
             ) : searchResult ? (
               <View style={styles.resultRow}>
-                <Avatar emoji={searchResult.avatar_emoji} />
+                <Avatar avatarKey={searchResult.avatar_emoji} />
                 <View style={{ flex: 1 }}>
                   <ThemedText type="smallBold">{searchResult.display_name}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
@@ -207,7 +207,7 @@ export default function FriendsScreen() {
                       const p = profiles[request.requester_id];
                       return (
                         <View key={request.id} style={styles.requestRow}>
-                          <Avatar emoji={p?.avatar_emoji ?? '🙂'} />
+                          <Avatar avatarKey={p?.avatar_emoji} />
                           <View style={{ flex: 1 }}>
                             <ThemedText type="smallBold">{p?.display_name ?? 'Someone'}</ThemedText>
                             <ThemedText type="small" themeColor="textSecondary">
@@ -243,7 +243,7 @@ export default function FriendsScreen() {
                       const p = profiles[request.addressee_id];
                       return (
                         <View key={request.id} style={styles.requestRow}>
-                          <Avatar emoji={p?.avatar_emoji ?? '🙂'} />
+                          <Avatar avatarKey={p?.avatar_emoji} />
                           <View style={{ flex: 1 }}>
                             <ThemedText type="smallBold">{p?.display_name ?? 'Someone'}</ThemedText>
                             <ThemedText type="small" themeColor="textSecondary">
@@ -281,7 +281,7 @@ export default function FriendsScreen() {
                         key={f.id}
                         style={styles.requestRow}
                         onPress={() => router.push(`/friend/${otherId}`)}>
-                        <Avatar emoji={p?.avatar_emoji ?? '🙂'} />
+                        <Avatar avatarKey={p?.avatar_emoji} />
                         <View style={{ flex: 1 }}>
                           <ThemedText type="smallBold">{p?.display_name ?? 'Friend'}</ThemedText>
                           <ThemedText type="small" themeColor="textSecondary">

@@ -170,18 +170,20 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}>
           <View style={styles.header}>
-            <View style={{ flexShrink: 1 }}>
+            <View style={{ flexShrink: 1, gap: Spacing.one }}>
               <ThemedText type="title" style={styles.headerTitle}>
                 {greeting}, {firstName}
               </ThemedText>
-              <ThemedText themeColor="textSecondary">{dateLabel}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">{dateLabel}</ThemedText>
             </View>
             <Pressable onPress={() => router.push('/(tabs)/profile')}>
-              <Avatar emoji={profile?.avatar_emoji ?? '🙂'} size={52} />
+              <Avatar avatarKey={profile?.avatar_emoji} size={52} />
             </Pressable>
           </View>
 
-          <FocusCarousel />
+          <View style={styles.carouselWrapper}>
+            <FocusCarousel />
+          </View>
 
           {friendProfiles.length > 0 ? (
             <ScrollView
@@ -191,7 +193,7 @@ export default function HomeScreen() {
               contentContainerStyle={styles.friendStripContent}>
               {friendProfiles.map((f) => (
                 <Pressable key={f.id} onPress={() => router.push(`/friend/${f.id}`)} style={styles.friendAvatar}>
-                  <Avatar emoji={f.avatar_emoji} size={44} />
+                  <Avatar avatarKey={f.avatar_emoji} size={44} />
                   {friendIdsWithNotes.has(f.id) ? (
                     <View style={[styles.friendDot, { backgroundColor: theme.danger, borderColor: theme.background }]} />
                   ) : null}
@@ -288,18 +290,19 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   scroll: { paddingBottom: Spacing.six, paddingTop: Spacing.two, gap: Spacing.three },
+  carouselWrapper: { marginTop: Spacing.two, marginBottom: Spacing.two },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerTitle: { fontSize: 30, fontWeight: '700' },
+  headerTitle: { fontSize: 26, fontWeight: '700' },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  sectionTitle: { fontSize: 22 },
+  sectionTitle: { fontSize: 20 },
   emptyState: { paddingVertical: Spacing.three },
   friendStrip: { flexGrow: 0 },
   friendStripContent: { gap: Spacing.three, paddingRight: Spacing.two },

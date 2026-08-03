@@ -75,7 +75,7 @@ export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate, da
                 styles.dayCell,
                 styles.dayCellButton,
                 tint && { backgroundColor: tint },
-                isSelected && { borderWidth: 2, borderColor: theme.text },
+                { borderColor: isSelected ? theme.text : 'transparent' },
               ]}>
               <ThemedText type="small" style={[isDisabled && { opacity: 0.3 }, tint && { color: '#fff' }]}>
                 {date.getDate()}
@@ -102,5 +102,5 @@ const styles = StyleSheet.create({
   weekdayCell: { width: `${100 / 7}%`, textAlign: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
-  dayCellButton: { borderRadius: Radius.pill },
+  dayCellButton: { borderRadius: Radius.pill, borderWidth: 2 },
 });

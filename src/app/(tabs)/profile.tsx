@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { Share } from 'react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -15,14 +16,10 @@ import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { deleteAccountData, exportUserData } from '@/lib/account';
 import { useAuth } from '@/lib/auth-context';
+import { AVATAR_KEYS, DEFAULT_AVATAR_KEY, avatarSource } from '@/lib/avatars';
 import { requestNotificationPermission, syncMoodReminder, syncWeeklyRecap } from '@/lib/notifications';
 import { useSettings, type ThemeMode } from '@/lib/settings-context';
 import { supabase } from '@/lib/supabase';
-
-const AVATAR_EMOJIS = [
-  '🙂', '😎', '🤓', '🥳', '🦊', '🐼', '🐸', '🐨', '🐯', '🐵', '🦁', '🐶',
-  '🦉', '🐢', '🐙', '🌵', '🌸', '⭐', '🌈', '🔥',
-];
 
 const THEME_OPTIONS: { mode: ThemeMode; label: string }[] = [
   { mode: 'system', label: 'System' },
@@ -36,7 +33,7 @@ export default function ProfileScreen() {
   const { themeMode, setThemeMode, colorBlindPalette, setColorBlindPalette } = useSettings();
 
   const [displayName, setDisplayName] = useState(profile?.display_name ?? '');
-  const [avatarEmoji, setAvatarEmoji] = useState(profile?.avatar_emoji ?? '🙂');
+  const [avatarKey, setAvatarKey] = useState(profile?.avatar_emoji ?? DEFAULT_AVATAR_KEY);
   const [savingProfile, setSavingProfile] = useState(false);
 
   const [moodEnabled, setMoodEnabled] = useState(profile?.mood_tracking_enabled ?? false);
@@ -68,7 +65,7 @@ export default function ProfileScreen() {
     setSavingProfile(true);
     const { error } = await supabase
       .from('profiles')
-      .update({ display_name: displayName.trim(), avatar_emoji: avatarEmoji })
+      .update({ display_name: displayName.trim(), avatar_emoji: avatarKey })
       .eq('id', session!.user.id);
     setSavingProfile(false);
     if (error) {
@@ -169,7 +166,7 @@ export default function ProfileScreen() {
             <ThemedText type="smallBold">@{profile.username}</ThemedText>
 
             <View style={styles.avatarPreview}>
-              <Avatar emoji={avatarEmoji} size={72} />
+              <Avatar avatarKey={avatarKey} size={72} />
             </View>
 
             <TextField label="Display name" value={displayName} onChangeText={setDisplayName} />
@@ -179,17 +176,17 @@ export default function ProfileScreen() {
                 Avatar
               </ThemedText>
               <View style={styles.grid}>
-                {AVATAR_EMOJIS.map((emoji) => {
-                  const selected = emoji === avatarEmoji;
+                {AVATAR_KEYS.map((key) => {
+                  const selected = key === avatarKey;
                   return (
                     <Pressable
-                      key={emoji}
-                      onPress={() => setAvatarEmoji(emoji)}
+                      key={key}
+                      onPress={() => setAvatarKey(key)}
                       style={[
-                        styles.emojiCell,
-                        { backgroundColor: selected ? theme.primary : theme.background },
+                        styles.avatarCell,
+                        { borderColor: selected ? theme.primary : 'transparent' },
                       ]}>
-                      <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
+                      <Image source={avatarSource(key)} style={styles.avatarImage} contentFit="cover" />
                     </Pressable>
                   );
                 })}
@@ -314,14 +311,14 @@ const styles = StyleSheet.create({
   card: { gap: Spacing.three },
   avatarPreview: { alignItems: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  emojiCell: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+  avatarCell: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.pill,
+    borderWidth: 3,
+    overflow: 'hidden',
   },
-  emojiText: { fontSize: 20 },
+  avatarImage: { width: '100%', height: '100%' },
   segmented: { flexDirection: 'row', gap: Spacing.two },
   segment: { flex: 1, alignItems: 'center', paddingVertical: Spacing.two, borderRadius: Radius.md },
   deleteButton: { alignItems: 'center', paddingVertical: Spacing.two },

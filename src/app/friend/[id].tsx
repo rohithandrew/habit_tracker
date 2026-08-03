@@ -157,7 +157,7 @@ export default function FriendDetailScreen() {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.headerRow}>
-            <Avatar emoji={friendProfile.avatar_emoji} size={56} />
+            <Avatar avatarKey={friendProfile.avatar_emoji} size={56} />
             <View>
               <ThemedText type="subtitle" style={styles.title}>
                 {friendProfile.display_name}

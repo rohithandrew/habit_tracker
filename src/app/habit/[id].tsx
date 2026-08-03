@@ -10,7 +10,7 @@ import { HabitFormModal } from '@/components/habit-form-modal';
 import type { HabitFormValues } from '@/components/habit-form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isHabitEffectivelyArchived, scheduleLabel } from '@/lib/habits';
 import {
@@ -48,7 +48,7 @@ export default function HabitDetailScreen() {
       ]);
       setHabit(fetchedHabit);
       setLogs(fetchedLogs);
-      navigation.setOptions({ title: fetchedHabit.title });
+      navigation.setOptions({ title: `${fetchedHabit.title} (${scheduleLabel(fetchedHabit.schedule_data)})` });
     } catch (err) {
       Alert.alert('Could not load habit', err instanceof Error ? err.message : String(err));
     } finally {
@@ -67,7 +67,7 @@ export default function HabitDetailScreen() {
       const updated = await updateHabit(habit.id, values);
       await syncHabitReminder(updated);
       setHabit(updated);
-      navigation.setOptions({ title: updated.title });
+      navigation.setOptions({ title: `${updated.title} (${scheduleLabel(updated.schedule_data)})` });
       setShowEditModal(false);
     } catch (err) {
       Alert.alert('Could not save changes', err instanceof Error ? err.message : String(err));
@@ -118,20 +118,9 @@ export default function HabitDetailScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerRow}>
-            <View style={[styles.iconCircle, { backgroundColor: `${habit.color_tag}33` }]}>
-              <ThemedText style={styles.icon}>{habit.emoji}</ThemedText>
-            </View>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="subtitle" style={styles.title}>
-                {habit.title}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary">
-                {scheduleLabel(habit.schedule_data)}
-                {ended ? ' — Ended' : ''}
-              </ThemedText>
-            </View>
-          </View>
+          {ended ? (
+            <ThemedText themeColor="textSecondary">Ended</ThemedText>
+          ) : null}
 
           <View style={styles.statsRow}>
             <Card style={[styles.statsCard, { flex: 1 }]}>
@@ -198,16 +187,6 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   scroll: { paddingBottom: Spacing.six, gap: Spacing.three },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: { fontSize: 26 },
-  title: { fontSize: 22 },
   statsRow: { flexDirection: 'row', gap: Spacing.three },
   statsCard: { alignItems: 'center', gap: 2 },
   statNumber: { fontSize: 36 },

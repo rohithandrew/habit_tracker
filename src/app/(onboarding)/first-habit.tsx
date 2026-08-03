@@ -39,7 +39,7 @@ export default function FirstHabitScreen() {
       .update({
         username: draft.username,
         display_name: draft.displayName,
-        avatar_emoji: draft.avatarEmoji,
+        avatar_emoji: draft.avatarKey,
         mood_tracking_enabled: draft.moodTrackingEnabled,
         period_tracking_enabled: draft.periodTrackingEnabled,
         timer_tracking_enabled: draft.focusTimerEnabled,

@@ -1,9 +1,11 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 
+import { DEFAULT_AVATAR_KEY } from '@/lib/avatars';
+
 export interface OnboardingDraft {
   username: string;
   displayName: string;
-  avatarEmoji: string;
+  avatarKey: string;
   focusTimerEnabled: boolean;
   moodTrackingEnabled: boolean;
   periodTrackingEnabled: boolean;
@@ -19,7 +21,7 @@ interface OnboardingContextValue {
 const defaultDraft: OnboardingDraft = {
   username: '',
   displayName: '',
-  avatarEmoji: '🙂',
+  avatarKey: DEFAULT_AVATAR_KEY,
   focusTimerEnabled: true,
   moodTrackingEnabled: false,
   periodTrackingEnabled: false,

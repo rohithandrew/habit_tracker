@@ -1,22 +1,22 @@
+import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { avatarSource } from '@/lib/avatars';
 
-export function Avatar({ emoji, size = 44 }: { emoji: string; size?: number }) {
+export function Avatar({ avatarKey, size = 44 }: { avatarKey: string | null | undefined; size?: number }) {
   const theme = useTheme();
   return (
     <View
       style={[
         styles.circle,
-        { width: size, height: size, borderRadius: Radius.pill, backgroundColor: theme.primarySoft },
+        { width: size, height: size, borderRadius: size / 2, backgroundColor: theme.primarySoft },
       ]}>
-      <ThemedText style={{ fontSize: size * 0.5 }}>{emoji}</ThemedText>
+      <Image source={avatarSource(avatarKey)} style={{ width: size, height: size }} contentFit="cover" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  circle: { alignItems: 'center', justifyContent: 'center' },
+  circle: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 });

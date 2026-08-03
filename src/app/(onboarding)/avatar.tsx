@@ -1,26 +1,24 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/avatar';
 import { Button } from '@/components/button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { AVATAR_KEYS, avatarSource } from '@/lib/avatars';
 import { useOnboarding } from '@/lib/onboarding-context';
-
-const AVATAR_EMOJIS = [
-  '🙂', '😎', '🤓', '🥳', '🦊', '🐼', '🐸', '🐨', '🐯', '🐵', '🦁', '🐶',
-  '🦉', '🐢', '🐙', '🌵', '🌸', '⭐', '🌈', '🔥',
-];
 
 export default function AvatarScreen() {
   const theme = useTheme();
   const { draft, update } = useOnboarding();
   const [displayName, setDisplayName] = useState(draft.displayName);
-  const [avatarEmoji, setAvatarEmoji] = useState(draft.avatarEmoji);
+  const [avatarKey, setAvatarKey] = useState(draft.avatarKey);
 
   return (
     <ThemedView style={styles.container}>
@@ -33,9 +31,7 @@ export default function AvatarScreen() {
         </ThemedText>
 
         <View style={styles.avatarPreview}>
-          <View style={[styles.avatarCircle, { backgroundColor: theme.primarySoft }]}>
-            <ThemedText style={styles.avatarEmoji}>{avatarEmoji}</ThemedText>
-          </View>
+          <Avatar avatarKey={avatarKey} size={88} />
         </View>
 
         <TextField
@@ -49,17 +45,17 @@ export default function AvatarScreen() {
           Avatar
         </ThemedText>
         <View style={styles.grid}>
-          {AVATAR_EMOJIS.map((emoji) => {
-            const selected = emoji === avatarEmoji;
+          {AVATAR_KEYS.map((key) => {
+            const selected = key === avatarKey;
             return (
               <Pressable
-                key={emoji}
-                onPress={() => setAvatarEmoji(emoji)}
+                key={key}
+                onPress={() => setAvatarKey(key)}
                 style={[
-                  styles.emojiCell,
-                  { backgroundColor: selected ? theme.primary : theme.backgroundElement },
+                  styles.avatarCell,
+                  { borderColor: selected ? theme.primary : 'transparent' },
                 ]}>
-                <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
+                <Image source={avatarSource(key)} style={styles.avatarImage} contentFit="cover" />
               </Pressable>
             );
           })}
@@ -70,7 +66,7 @@ export default function AvatarScreen() {
             label="Continue"
             disabled={displayName.trim().length === 0}
             onPress={() => {
-              update({ displayName: displayName.trim(), avatarEmoji });
+              update({ displayName: displayName.trim(), avatarKey });
               router.push('/(onboarding)/features');
             }}
           />
@@ -93,22 +89,14 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, lineHeight: 34 },
   avatarPreview: { alignItems: 'center', marginVertical: Spacing.three },
-  avatarCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarEmoji: { fontSize: 44 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  emojiCell: {
+  avatarCell: {
     width: 52,
     height: 52,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: Radius.pill,
+    borderWidth: 3,
+    overflow: 'hidden',
   },
-  emojiText: { fontSize: 26 },
+  avatarImage: { width: '100%', height: '100%' },
   actions: { gap: Spacing.two, marginTop: 'auto', paddingBottom: Spacing.four },
 });

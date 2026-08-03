@@ -56,7 +56,9 @@ export function HabitForm({
 
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [emoji, setEmoji] = useState(initialValues?.emoji ?? HABIT_EMOJIS[0]);
-  const [colorTag, setColorTag] = useState(initialValues?.colorTag ?? HABIT_COLORS[0]);
+  const [colorTag] = useState(
+    initialValues?.colorTag ?? HABIT_COLORS[Math.floor(Math.random() * HABIT_COLORS.length)]
+  );
   const [scheduleType, setScheduleType] = useState<ScheduleType>(
     initialValues?.scheduleType ?? 'daily'
   );
@@ -110,28 +112,12 @@ export function HabitForm({
             );
           })}
         </View>
-      </View>
-
-      <View>
-        <ThemedText type="smallBold" style={styles.label}>
-          Color
-        </ThemedText>
-        <View style={styles.grid}>
-          {HABIT_COLORS.map((color) => {
-            const selected = color === colorTag;
-            return (
-              <Pressable
-                key={color}
-                onPress={() => setColorTag(color)}
-                style={[
-                  styles.colorSwatch,
-                  { backgroundColor: color },
-                  selected && { borderWidth: 3, borderColor: theme.text },
-                ]}
-              />
-            );
-          })}
-        </View>
+        <TextField
+          value={emoji}
+          onChangeText={setEmoji}
+          placeholder="Or type any emoji from your keyboard"
+          style={styles.emojiInput}
+        />
       </View>
 
       <View>
@@ -281,7 +267,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emojiText: { fontSize: 22 },
-  colorSwatch: { width: 36, height: 36, borderRadius: Radius.pill },
+  emojiInput: { marginTop: Spacing.two },
   dayChip: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
