@@ -70,6 +70,10 @@ function RootNavigator() {
         name="mood/period"
         options={{ headerShown: true, headerBackTitle: 'Back', title: 'Period cycle' }}
       />
+      <Stack.Screen
+        name="tasks/all"
+        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Tasks' }}
+      />
     </Stack>
   );
 }

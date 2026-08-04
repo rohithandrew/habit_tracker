@@ -59,7 +59,6 @@ export function StickyNoteView({
           top,
           transform: pan.getTranslateTransform(),
           zIndex: dragging ? 10 : 1,
-          shadowOpacity: dragging ? 0.25 : 0.12,
         },
       ]}>
       <Pressable onPress={onPress} disabled={!onPress}>
@@ -78,10 +77,6 @@ const styles = StyleSheet.create({
     minHeight: 60,
     borderRadius: Radius.sm,
     padding: Spacing.two,
-    shadowColor: '#000',
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
     transform: [{ rotate: '-2deg' }],
   },
   text: { color: '#3A3320' },

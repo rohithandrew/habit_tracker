@@ -5,10 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
-import { FocusCarousel } from '@/components/focus-carousel';
 import { HabitFormModal } from '@/components/habit-form-modal';
 import type { HabitFormValues } from '@/components/habit-form';
 import { StickyNotesCanvas } from '@/components/sticky-notes-canvas';
+import { TasksWidget } from '@/components/tasks-widget';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WeeklyHabitRow } from '@/components/weekly-habit-row';
@@ -27,7 +27,8 @@ import { fetchFriendships, fetchProfilesByIds } from '@/lib/friends-api';
 import { syncHabitReminder } from '@/lib/notifications';
 import { fetchStickyNotes, markStickyNoteRead } from '@/lib/sticky-notes-api';
 import { computeCurrentStreak, reachedMilestone } from '@/lib/streaks';
-import type { Habit, HabitLog, PublicProfile, StickyNote } from '@/lib/types';
+import { fetchUpcomingTasks } from '@/lib/tasks-api';
+import type { Habit, HabitLog, PublicProfile, StickyNote, Task } from '@/lib/types';
 
 const CONTRIBUTION_HISTORY_DAYS = 14 * 7;
 
@@ -38,6 +39,7 @@ export default function HomeScreen() {
 
   const [habits, setHabits] = useState<Habit[]>([]);
   const [logs, setLogs] = useState<HabitLog[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
   const [friendProfiles, setFriendProfiles] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,9 +57,10 @@ export default function HomeScreen() {
       try {
         const since = new Date();
         since.setDate(since.getDate() - CONTRIBUTION_HISTORY_DAYS);
-        const [fetchedHabits, fetchedLogs, notes, friendships] = await Promise.all([
+        const [fetchedHabits, fetchedLogs, fetchedTasks, notes, friendships] = await Promise.all([
           fetchHabits(session.user.id),
           fetchHabitLogs(session.user.id, since),
+          fetchUpcomingTasks(session.user.id, toDateKey(new Date())),
           fetchStickyNotes(session.user.id, 'habit_grid'),
           fetchFriendships(session.user.id),
         ]);
@@ -70,6 +73,7 @@ export default function HomeScreen() {
 
         setHabits(fetchedHabits);
         setLogs(fetchedLogs);
+        setTasks(fetchedTasks);
         setStickyNotes(notes);
 
         // Mark this visit's unread notes read so their author's avatar stops showing
@@ -194,9 +198,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.carouselWrapper}>
-            <FocusCarousel />
-          </View>
+          <TasksWidget tasks={tasks} />
 
           {friendsWithUnreadNotes.length > 0 ? (
             <ScrollView
@@ -301,7 +303,6 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   scroll: { paddingBottom: Spacing.six, paddingTop: Spacing.two, gap: Spacing.three },
-  carouselWrapper: { marginTop: Spacing.two, marginBottom: Spacing.two },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -105,6 +105,15 @@ export interface PeriodLog {
   created_at: string;
 }
 
+export interface Task {
+  id: string;
+  user_id: string;
+  date: string;
+  text: string;
+  color: string;
+  created_at: string;
+}
+
 export type StickyNoteTargetType = 'habit_grid' | 'timer_session' | 'mood_calendar';
 
 export interface StickyNote {
@@ -156,6 +165,8 @@ export const HABIT_COLORS = [
   '#5FD0D6',
   '#F2C94C',
 ] as const;
+
+export const TASK_COLORS = HABIT_COLORS;
 
 export const HABIT_EMOJIS = [
   '✅', '💧', '📖', '🏃', '🧘', '🍎', '😴', '✍️', '🎯', '🎨', '🧹', '💪',

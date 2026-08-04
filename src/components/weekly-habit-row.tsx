@@ -44,7 +44,7 @@ export function WeeklyHabitRow({
   return (
     <Pressable
       onPress={() => router.push(`/habit/${habit.id}`)}
-      style={[styles.row, { backgroundColor: theme.backgroundElement, shadowColor: theme.text }]}>
+      style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
       <View style={styles.titleRow}>
         <View style={styles.titleLeft}>
           <ThemedText type="smallBold" numberOfLines={1} style={styles.title}>
@@ -106,10 +106,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing.four,
     gap: Spacing.three,
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titleLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, marginRight: Spacing.two },

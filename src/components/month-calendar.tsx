@@ -13,11 +13,20 @@ export type MonthCalendarProps = {
   maxDate?: string;
   /** Optional background tint per date, e.g. for period/fertile/predicted day coding. */
   dayColor?: (dateKey: string) => string | undefined;
+  /** Optional small indicator dot per date, e.g. to mark days that have a task. */
+  dayDot?: (dateKey: string) => string | undefined;
 };
 
 const WEEKDAY_HEADERS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate, dayColor }: MonthCalendarProps) {
+export function MonthCalendar({
+  selectedDate,
+  onSelectDate,
+  minDate,
+  maxDate,
+  dayColor,
+  dayDot,
+}: MonthCalendarProps) {
   const theme = useTheme();
   const initial = selectedDate ? new Date(selectedDate) : new Date();
   const [viewDate, setViewDate] = useState(new Date(initial.getFullYear(), initial.getMonth(), 1));
@@ -41,13 +50,17 @@ export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate, da
         <Pressable
           onPress={() => setViewDate(new Date(year, month - 1, 1))}
           style={[styles.navButton, { backgroundColor: theme.backgroundSelected }]}>
-          <ThemedText type="smallBold">‹</ThemedText>
+          <ThemedText type="smallBold" style={styles.navArrow}>
+            ‹
+          </ThemedText>
         </Pressable>
         <ThemedText type="smallBold">{monthLabel}</ThemedText>
         <Pressable
           onPress={() => setViewDate(new Date(year, month + 1, 1))}
           style={[styles.navButton, { backgroundColor: theme.backgroundSelected }]}>
-          <ThemedText type="smallBold">›</ThemedText>
+          <ThemedText type="smallBold" style={styles.navArrow}>
+            ›
+          </ThemedText>
         </Pressable>
       </View>
 
@@ -66,21 +79,29 @@ export function MonthCalendar({ selectedDate, onSelectDate, minDate, maxDate, da
           const isSelected = key === selectedDate;
           const isDisabled = (minDate ? key < minDate : false) || (maxDate ? key > maxDate : false);
           const tint = dayColor?.(key);
+          const dot = dayDot?.(key);
           return (
-            <Pressable
-              key={key}
-              disabled={isDisabled}
-              onPress={() => onSelectDate(key)}
-              style={[
-                styles.dayCell,
-                styles.dayCellButton,
-                tint && { backgroundColor: tint },
-                { borderColor: isSelected ? theme.text : 'transparent' },
-              ]}>
-              <ThemedText type="small" style={[isDisabled && { opacity: 0.3 }, tint && { color: '#fff' }]}>
-                {date.getDate()}
-              </ThemedText>
-            </Pressable>
+            <View key={key} style={styles.dayCell}>
+              <Pressable
+                disabled={isDisabled}
+                onPress={() => onSelectDate(key)}
+                android_ripple={{ color: theme.backgroundSelected, radius: 16 }}
+                style={[
+                  styles.dayCircle,
+                  tint ? { backgroundColor: tint } : isSelected ? { backgroundColor: theme.text } : null,
+                ]}>
+                <ThemedText
+                  type="small"
+                  style={[
+                    styles.dayNumber,
+                    isDisabled && { opacity: 0.3 },
+                    (tint || isSelected) && { color: theme.background },
+                  ]}>
+                  {date.getDate()}
+                </ThemedText>
+              </Pressable>
+              {dot ? <View style={[styles.dot, { backgroundColor: dot }]} /> : null}
+            </View>
           );
         })}
       </View>
@@ -98,9 +119,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  navArrow: { fontSize: 20, includeFontPadding: false, textAlignVertical: 'center' },
   weekRow: { flexDirection: 'row' },
   weekdayCell: { width: `${100 / 7}%`, textAlign: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
-  dayCellButton: { borderRadius: Radius.pill, borderWidth: 2 },
+  dayCell: {
+    width: `${100 / 7}%`,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  dot: { position: 'absolute', bottom: 2, width: 15, height: 4, borderRadius: 10 },
+  dayCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  dayNumber: { fontSize: 14, textAlign: 'center', includeFontPadding: false, textAlignVertical: 'center' },
 });
