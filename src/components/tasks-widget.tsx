@@ -38,7 +38,7 @@ export function TasksWidget({ tasks }: { tasks: Task[] }) {
             const dotColor = firstTaskColorFor(key);
             return (
               <View key={key} style={styles.dayCell}>
-                <ThemedText type="small" themeColor="textSecondary">
+                <ThemedText type="small" themeColor="textSecondary" style={styles.weekdayLabel}>
                   {WEEKDAY_LABELS[i]}
                 </ThemedText>
                 <View style={[styles.dayNumberWrap, isToday && { backgroundColor: theme.primary }]}>
@@ -56,7 +56,7 @@ export function TasksWidget({ tasks }: { tasks: Task[] }) {
 
         {tasks.length > 0 ? (
           <View style={styles.upcoming}>
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="small" themeColor="textSecondary" style={styles.upcomingLabel}>
               Upcoming
             </ThemedText>
             {tasks.slice(0, 3).map((t) => (
@@ -84,6 +84,7 @@ const styles = StyleSheet.create({
   arrow: { fontSize: 22, includeFontPadding: false, textAlignVertical: 'center' },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
   dayCell: { alignItems: 'center', gap: 4, width: 32 },
+  weekdayLabel: { fontWeight: '400' },
   dayNumberWrap: {
     width: 28,
     height: 28,
@@ -93,8 +94,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   dayNumber: { fontSize: 14, textAlign: 'center', includeFontPadding: false, textAlignVertical: 'center' },
-  dot: { width: 15, height: 4, borderRadius: 10 },
-  upcoming: { gap: Spacing.two },
+  dot: { width: 15, height: 4, borderRadius: Radius.pill },
+  upcoming: { gap: Spacing.three },
+  upcomingLabel: { fontSize: 16 },
   taskRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   taskBar: { width: 4, height: 16, borderRadius: 2 },
 });

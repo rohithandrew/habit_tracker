@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
-  dot: { position: 'absolute', bottom: 2, width: 15, height: 4, borderRadius: 10 },
+  dot: { position: 'absolute', bottom: 2, width: 15, height: 4, borderRadius: Radius.pill },
   dayCircle: {
     width: 32,
     height: 32,

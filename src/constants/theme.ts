@@ -10,13 +10,15 @@ import { Platform } from 'react-native';
 export const Colors = {
   light: {
     text: '#20241C',
-    background: '#EFEBDD',
+    background: '#F1EEE1',
     backgroundElement: '#FFFFFF',
-    backgroundSelected: '#EDF0D1',
+    backgroundSelected: '#E7E2CF',
     textSecondary: '#767C6E',
     border: '#E4E0D0',
     primary: '#C7EF3E',
-    primarySoft: '#EEF7C4',
+    /** A warm neutral (not a pale green) used for secondary tinted surfaces — avatar circles,
+     * selected-but-not-primary states — so only the real `primary` reads as "the green". */
+    primarySoft: '#E9E4D3',
     /** Text/icon color to place on top of a `primary`-filled surface — primary is a light,
      * high-luminance lime in both themes, so it always needs a dark label, not white. */
     onPrimary: '#1B2A16',
@@ -35,7 +37,7 @@ export const Colors = {
     textSecondary: '#9CA48D',
     border: '#2A2E20',
     primary: '#C7EF3E',
-    primarySoft: '#2B3320',
+    primarySoft: '#2A2822',
     onPrimary: '#1B2A16',
     accent: '#C7EF3E',
     success: '#5FCB98',

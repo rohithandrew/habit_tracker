@@ -59,7 +59,7 @@ export function ContributionGrid({
       }
     : {
         0: theme.backgroundSelected,
-        1: theme.primarySoft,
+        1: '#EEF7C4',
         2: '#DCEB8C',
         3: theme.primary,
         4: '#4B7F3D',
@@ -98,7 +98,7 @@ export function ContributionLegend() {
   const { colorBlindPalette } = useSettings();
   const levelColors = colorBlindPalette
     ? [theme.backgroundSelected, ...COLOR_BLIND_SCALE.slice(1)]
-    : [theme.backgroundSelected, theme.primarySoft, '#DCEB8C', theme.primary, '#4B7F3D'];
+    : [theme.backgroundSelected, '#EEF7C4', '#DCEB8C', theme.primary, '#4B7F3D'];
   return (
     <View style={styles.legend}>
       <ThemedText type="small" themeColor="textSecondary">

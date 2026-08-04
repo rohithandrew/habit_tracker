@@ -1,20 +1,15 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text } from 'react-native';
+import { View } from 'react-native';
 
+import { CustomTabBar } from '@/components/custom-tab-bar';
 import { MoodCheckInModal } from '@/components/mood-check-in-modal';
-import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
 import { fetchTodayMood, upsertMood } from '@/lib/mood-api';
 import { skipMoodPromptToday, wasMoodPromptSkippedToday } from '@/lib/mood-prompt';
 import { toDateKey } from '@/lib/habits';
 
-function TabIcon({ emoji }: { emoji: string }) {
-  return <Text style={{ fontSize: 20 }}>{emoji}</Text>;
-}
-
 export default function TabsLayout() {
-  const theme = useTheme();
   const { session, profile } = useAuth();
   const [showMoodPrompt, setShowMoodPrompt] = useState(false);
 
@@ -56,28 +51,17 @@ export default function TabsLayout() {
     <>
     <MoodCheckInModal visible={showMoodPrompt} onSelect={handleMoodSelect} onSkip={handleMoodSkip} />
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textSecondary,
-        tabBarStyle: { backgroundColor: theme.backgroundElement, borderTopColor: theme.border },
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Home', tabBarIcon: () => <TabIcon emoji="🏠" /> }}
-      />
-      <Tabs.Screen
-        name="timer"
-        options={{ title: 'Timer', tabBarIcon: () => <TabIcon emoji="⏱️" /> }}
-      />
-      <Tabs.Screen
-        name="mood"
-        options={{ title: 'Mood', tabBarIcon: () => <TabIcon emoji="🙂" /> }}
-      />
-      <Tabs.Screen
-        name="friends"
-        options={{ title: 'Friends', tabBarIcon: () => <TabIcon emoji="🧑‍🤝‍🧑" /> }}
-      />
+      screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}
+      layout={({ state, navigation, children }) => (
+        <View style={{ flex: 1 }}>
+          {children}
+          <CustomTabBar state={state} navigation={navigation} />
+        </View>
+      )}>
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="timer" options={{ title: 'Timer' }} />
+      <Tabs.Screen name="mood" options={{ title: 'Mood' }} />
+      <Tabs.Screen name="friends" options={{ title: 'Friends' }} />
       <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
     </>

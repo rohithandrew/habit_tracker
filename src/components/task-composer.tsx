@@ -89,7 +89,7 @@ export function TaskComposer({
             </ThemedText>
             <MonthCalendar selectedDate={dateKey} onSelectDate={setDateKey} />
 
-            <Button label="Add task" disabled={!text.trim()} onPress={handleAdd} />
+            <Button label="+ Add task" disabled={!text.trim()} onPress={handleAdd} />
 
             {tasksForDate.length > 0 ? (
               <View style={styles.list}>

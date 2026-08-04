@@ -220,7 +220,7 @@ export default function HomeScreen() {
               Weekly Habits
             </ThemedText>
             <Pressable onPress={() => setShowAddModal(true)} hitSlop={8} style={{ marginRight: Spacing.two }}>
-              <ThemedText type="smallBold">+ Add habit</ThemedText>
+              <ThemedText type="small">+ Add habit</ThemedText>
             </Pressable>
           </View>
 
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTitle: { fontSize: 26, fontWeight: '700' },
-  dateLabel: { fontWeight: '400', fontSize: 15 },
+  dateLabel: { fontWeight: '400', fontSize: 13 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',

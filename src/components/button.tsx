@@ -49,7 +49,11 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        <ThemedText type="smallBold" style={{ color: textColor }}>
+        <ThemedText
+          type="smallBold"
+          numberOfLines={1}
+          ellipsizeMode="clip"
+          style={[styles.label, { color: textColor }]}>
           {label}
         </ThemedText>
       )}
@@ -68,4 +72,5 @@ const styles = StyleSheet.create({
   fullWidth: {
     alignSelf: 'stretch',
   },
+  label: { flexShrink: 0, includeFontPadding: false },
 });

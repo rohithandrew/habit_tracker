@@ -99,7 +99,9 @@ export default function AllTasksScreen() {
           {loading ? (
             <ThemedText themeColor="textSecondary">Loading…</ThemedText>
           ) : tasks.length === 0 ? (
-            <ThemedText themeColor="textSecondary">No tasks yet. Tap a date to add one.</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.emptyText}>
+              No tasks yet. Tap a date to add one.
+            </ThemedText>
           ) : (
             <View style={{ gap: Spacing.four }}>
               {groupByDate(tasks).map(([dateKey, dayTasks]) => (
@@ -167,6 +169,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   sectionTitle: { marginTop: Spacing.three, fontSize: 21 },
+  emptyText: { fontWeight: '400' },
   taskRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   taskBar: { width: 4, height: 24, borderRadius: 2 },
 });
