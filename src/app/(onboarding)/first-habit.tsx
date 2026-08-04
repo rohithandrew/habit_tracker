@@ -113,7 +113,7 @@ export default function FirstHabitScreen() {
                     { backgroundColor: selected ? theme.primary : theme.backgroundElement },
                   ]}>
                   <ThemedText>{t.emoji}</ThemedText>
-                  <ThemedText type="small" style={selected ? { color: '#fff' } : undefined}>
+                  <ThemedText type="small" style={selected ? { color: theme.onPrimary } : undefined}>
                     {t.title}
                   </ThemedText>
                 </Pressable>

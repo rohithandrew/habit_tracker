@@ -216,7 +216,7 @@ export default function FriendsScreen() {
                           </View>
                           <View style={styles.requestActions}>
                             <Pressable onPress={() => handleRespond(request, true)}>
-                              <ThemedText type="smallBold" themeColor="primary">
+                              <ThemedText type="smallBold" themeColor="accent">
                                 Accept
                               </ThemedText>
                             </Pressable>

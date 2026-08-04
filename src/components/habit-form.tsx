@@ -133,7 +133,7 @@ export function HabitForm({
                   styles.dayChip,
                   { backgroundColor: selected ? theme.primary : theme.backgroundSelected },
                 ]}>
-                <ThemedText type="small" style={selected ? { color: '#fff' } : undefined}>
+                <ThemedText type="small" style={selected ? { color: theme.onPrimary } : undefined}>
                   {weekdayLabel(day)}
                 </ThemedText>
               </Pressable>

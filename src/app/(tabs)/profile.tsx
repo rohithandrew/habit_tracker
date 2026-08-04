@@ -260,7 +260,7 @@ export default function ProfileScreen() {
                   ]}>
                   <ThemedText
                     type="small"
-                    style={themeMode === opt.mode ? { color: '#fff' } : undefined}>
+                    style={themeMode === opt.mode ? { color: theme.onPrimary } : undefined}>
                     {opt.label}
                   </ThemedText>
                 </Pressable>

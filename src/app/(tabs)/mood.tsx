@@ -94,7 +94,7 @@ export default function MoodScreen() {
             Turn it on from Profile → Health to start logging how you feel.
           </ThemedText>
           <Pressable onPress={() => router.push('/(tabs)/profile')} style={{ marginTop: Spacing.four }}>
-            <ThemedText themeColor="primary" type="smallBold">
+            <ThemedText themeColor="accent" type="smallBold">
               Go to Profile
             </ThemedText>
           </Pressable>

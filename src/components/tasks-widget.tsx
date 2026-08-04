@@ -4,13 +4,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, getWeekDates, toDateKey } from '@/lib/habits';
 import type { Task } from '@/lib/types';
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const SELECTED_COLOR = '#4C8DFF';
 
 export function TasksWidget({ tasks }: { tasks: Task[] }) {
+  const theme = useTheme();
   const todayKey = toDateKey(new Date());
   const weekDates = getWeekDates(new Date());
 
@@ -40,8 +41,10 @@ export function TasksWidget({ tasks }: { tasks: Task[] }) {
                 <ThemedText type="small" themeColor="textSecondary">
                   {WEEKDAY_LABELS[i]}
                 </ThemedText>
-                <View style={[styles.dayNumberWrap, isToday && { backgroundColor: SELECTED_COLOR }]}>
-                  <ThemedText type="smallBold" style={[styles.dayNumber, isToday && { color: '#fff' }]}>
+                <View style={[styles.dayNumberWrap, isToday && { backgroundColor: theme.primary }]}>
+                  <ThemedText
+                    type="smallBold"
+                    style={[styles.dayNumber, isToday && { color: theme.onPrimary }]}>
                     {date.getDate()}
                   </ThemedText>
                 </View>

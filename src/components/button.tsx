@@ -33,7 +33,8 @@ export function Button({
           ? theme.backgroundSelected
           : 'transparent';
 
-  const textColor = variant === 'primary' || variant === 'danger' ? '#FFFFFF' : theme.text;
+  const textColor =
+    variant === 'primary' ? theme.onPrimary : variant === 'danger' ? '#FFFFFF' : theme.text;
 
   return (
     <Pressable

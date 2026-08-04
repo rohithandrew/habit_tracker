@@ -59,7 +59,7 @@ export default function TimerHistoryScreen() {
                   styles.rangeChip,
                   { backgroundColor: range === r ? theme.primary : theme.backgroundSelected },
                 ]}>
-                <ThemedText type="small" style={range === r ? { color: '#fff' } : undefined}>
+                <ThemedText type="small" style={range === r ? { color: theme.onPrimary } : undefined}>
                   {r} days
                 </ThemedText>
               </Pressable>

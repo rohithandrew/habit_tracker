@@ -119,13 +119,15 @@ export default function TimerScreen() {
 
           {activeSession ? (
             <Card style={[styles.timerCard, { backgroundColor: theme.primary }]}>
-              <ThemedText type="small" style={styles.activeLabel}>
+              <ThemedText type="small" style={[styles.activeLabel, { color: theme.onPrimary }]}>
                 Working on
               </ThemedText>
-              <ThemedText type="subtitle" style={styles.taskText}>
+              <ThemedText type="subtitle" style={[styles.taskText, { color: theme.onPrimary }]}>
                 {activeSession.task_description}
               </ThemedText>
-              <ThemedText style={styles.elapsedText}>{formatElapsed(elapsedSeconds)}</ThemedText>
+              <ThemedText style={[styles.elapsedText, { color: theme.onPrimary }]}>
+                {formatElapsed(elapsedSeconds)}
+              </ThemedText>
               <Button label="Stop" variant="secondary" loading={stopping} onPress={handleStop} />
             </Card>
           ) : (
@@ -157,7 +159,7 @@ export default function TimerScreen() {
           <View style={styles.sectionHeader}>
             <ThemedText type="smallBold">Recent sessions</ThemedText>
             <Pressable onPress={() => router.push('/timer/history')}>
-              <ThemedText type="small" themeColor="primary">
+              <ThemedText type="small" themeColor="accent">
                 View all
               </ThemedText>
             </Pressable>
@@ -209,9 +211,9 @@ const styles = StyleSheet.create({
   pageTitle: { fontSize: 24 },
   card: { gap: Spacing.three },
   timerCard: { alignItems: 'center', gap: Spacing.two },
-  activeLabel: { color: '#fff', opacity: 0.85 },
-  taskText: { color: '#fff', fontSize: 20, textAlign: 'center' },
-  elapsedText: { color: '#fff', fontSize: 40, fontVariant: ['tabular-nums'], fontWeight: '700' },
+  activeLabel: { opacity: 0.7 },
+  taskText: { fontSize: 20, textAlign: 'center' },
+  elapsedText: { fontSize: 40, fontVariant: ['tabular-nums'], fontWeight: '700' },
   statsRow: { flexDirection: 'row', gap: Spacing.three },
   statCard: { alignItems: 'center', gap: 2 },
   statNumber: { fontSize: 28 },

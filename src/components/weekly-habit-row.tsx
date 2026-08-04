@@ -92,7 +92,7 @@ export function WeeklyHabitRow({
                   opacity: eligible ? 1 : 0.35,
                 },
               ]}>
-              {done ? <ThemedText style={styles.doneCheck}>✓</ThemedText> : null}
+              {done ? <ThemedText style={{ color: theme.onPrimary }}>✓</ThemedText> : null}
             </Pressable>
           );
         })}
@@ -124,5 +124,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  doneCheck: { color: '#fff' },
 });

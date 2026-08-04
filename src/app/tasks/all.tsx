@@ -7,12 +7,14 @@ import { TaskComposer } from '@/components/task-composer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
 import { fromDateKey, toDateKey } from '@/lib/habits';
 import { createTask, deleteTask, fetchAllTasks } from '@/lib/tasks-api';
 import type { Task } from '@/lib/types';
 
 export default function AllTasksScreen() {
+  const theme = useTheme();
   const { session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,8 +82,11 @@ export default function AllTasksScreen() {
 
             <Pressable
               onPress={() => openComposerFor(toDateKey(new Date()))}
-              style={({ pressed }) => [styles.addButton, { opacity: pressed ? 0.85 : 1 }]}>
-              <ThemedText type="smallBold" style={{ color: '#fff' }}>
+              style={({ pressed }) => [
+                styles.addButton,
+                { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1 },
+              ]}>
+              <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>
                 + Add task
               </ThemedText>
             </Pressable>
@@ -156,7 +161,6 @@ const styles = StyleSheet.create({
   },
   scroll: { gap: Spacing.four, paddingBottom: Spacing.six },
   addButton: {
-    backgroundColor: '#4C8DFF',
     paddingVertical: Spacing.three,
     borderRadius: Radius.md,
     alignItems: 'center',

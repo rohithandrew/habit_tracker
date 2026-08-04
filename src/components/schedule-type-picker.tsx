@@ -33,7 +33,7 @@ export function ScheduleTypePicker({
               styles.chip,
               { backgroundColor: selected ? theme.primary : theme.backgroundSelected },
             ]}>
-            <ThemedText type="small" numberOfLines={1} style={selected ? { color: '#fff' } : undefined}>
+            <ThemedText type="small" numberOfLines={1} style={selected ? { color: theme.onPrimary } : undefined}>
               {option.label}
             </ThemedText>
           </Pressable>
