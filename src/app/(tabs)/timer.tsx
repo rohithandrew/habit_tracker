@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useNavigation } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -8,7 +9,7 @@ import { Card } from '@/components/card';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { toDateKey } from '@/lib/habits';
 import { useAuth } from '@/lib/auth-context';
@@ -29,12 +30,14 @@ export default function TimerScreen() {
   const { session } = useAuth();
 
   const [activeSession, setActiveSession] = useState<TimerSession | null>(null);
-  const [recentSessions, setRecentSessions] = useState<TimerSession[]>([]);
+  const [sessions, setSessions] = useState<TimerSession[]>([]);
   const [taskInput, setTaskInput] = useState('');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
+
+  const pulse = useRef(new Animated.Value(1)).current;
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -47,7 +50,7 @@ export default function TimerScreen() {
         fetchSessionHistory(session.user.id, since),
       ]);
       setActiveSession(active);
-      setRecentSessions(history.slice(0, 5));
+      setSessions(history);
     } catch (err) {
       Alert.alert('Could not load timer', err instanceof Error ? err.message : String(err));
     } finally {
@@ -73,11 +76,26 @@ export default function TimerScreen() {
     return () => clearInterval(interval);
   }, [activeSession]);
 
-  async function handleStart() {
-    if (!session || !taskInput.trim()) return;
+  useEffect(() => {
+    if (!activeSession) {
+      pulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.25, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [activeSession, pulse]);
+
+  async function startWithTask(taskDescription: string) {
+    if (!session || !taskDescription.trim()) return;
     setStarting(true);
     try {
-      const created = await startSession(session.user.id, taskInput.trim());
+      const created = await startSession(session.user.id, taskDescription.trim());
       setActiveSession(created);
       setTaskInput('');
     } catch (err) {
@@ -85,6 +103,10 @@ export default function TimerScreen() {
     } finally {
       setStarting(false);
     }
+  }
+
+  function handleStart() {
+    return startWithTask(taskInput);
   }
 
   async function handleStop() {
@@ -105,46 +127,110 @@ export default function TimerScreen() {
   if (!session) return null;
 
   const todayKey = toDateKey(new Date());
-  const todaySeconds = recentSessions
-    .filter((s) => toDateKey(new Date(s.started_at)) === todayKey)
-    .reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0);
+  const todaySessions = sessions.filter((s) => toDateKey(new Date(s.started_at)) === todayKey);
+  const todaySeconds = todaySessions.reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0);
+  const recentSessions = sessions.slice(0, 5);
+
+  const taskTotalsToday = new Map<string, number>();
+  for (const s of todaySessions) {
+    taskTotalsToday.set(
+      s.task_description,
+      (taskTotalsToday.get(s.task_description) ?? 0) + (s.duration_seconds ?? 0)
+    );
+  }
+  const todaysTasks = [...taskTotalsToday.keys()];
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <ThemedText type="subtitle" style={styles.pageTitle}>
-            Focus timer
-          </ThemedText>
+          <View style={styles.header}>
+            <View style={[styles.headerIcon, { backgroundColor: theme.backgroundSelected }]}>
+              <Ionicons name="timer-outline" size={20} color={theme.accent} />
+            </View>
+            <ThemedText type="subtitle" style={styles.pageTitle}>
+              Focus timer
+            </ThemedText>
+          </View>
 
           {activeSession ? (
             <Card style={[styles.timerCard, { backgroundColor: theme.primary }]}>
-              <ThemedText type="small" style={[styles.activeLabel, { color: theme.onPrimary }]}>
-                Working on
-              </ThemedText>
-              <ThemedText type="subtitle" style={[styles.taskText, { color: theme.onPrimary }]}>
+              <View style={styles.liveRow}>
+                <ThemedText type="small" style={[styles.activeLabel, { color: theme.onPrimary }]}>
+                  Working on
+                </ThemedText>
+                <View style={styles.liveBadge}>
+                  <Animated.View
+                    style={[styles.liveDot, { backgroundColor: theme.onPrimary, opacity: pulse }]}
+                  />
+                  <ThemedText type="small" style={[styles.liveText, { color: theme.onPrimary }]}>
+                    LIVE
+                  </ThemedText>
+                </View>
+              </View>
+              <ThemedText
+                type="subtitle"
+                numberOfLines={2}
+                style={[styles.taskText, { color: theme.onPrimary }]}>
                 {activeSession.task_description}
               </ThemedText>
               <ThemedText style={[styles.elapsedText, { color: theme.onPrimary }]}>
                 {formatElapsed(elapsedSeconds)}
               </ThemedText>
-              <Button label="Stop" variant="secondary" loading={stopping} onPress={handleStop} />
+              <Button
+                label="Stop session"
+                icon="stop-circle"
+                variant="secondary"
+                loading={stopping}
+                onPress={handleStop}
+              />
             </Card>
           ) : (
-            <Card style={styles.card}>
-              <ThemedText type="smallBold">What are you working on?</ThemedText>
-              <TextField
-                placeholder="e.g. Deep work: finish report"
-                value={taskInput}
-                onChangeText={setTaskInput}
-              />
-              <Button
-                label="Start timer"
-                disabled={!taskInput.trim()}
-                loading={starting}
-                onPress={handleStart}
-              />
-            </Card>
+            <>
+              {todaysTasks.length > 0 ? (
+                <Card style={styles.card}>
+                  <ThemedText type="smallBold">Continue today&apos;s work</ThemedText>
+                  {todaysTasks.map((task) => (
+                    <Pressable
+                      key={task}
+                      disabled={starting}
+                      onPress={() => startWithTask(task)}
+                      style={[styles.continueRow, { borderColor: theme.border }]}>
+                      <View style={{ flex: 1 }}>
+                        <ThemedText type="smallBold" numberOfLines={1}>
+                          {task}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {formatElapsed(taskTotalsToday.get(task) ?? 0)} logged today
+                        </ThemedText>
+                      </View>
+                      <View style={[styles.resumeButton, { backgroundColor: theme.primary }]}>
+                        <Ionicons name="play" size={16} color={theme.onPrimary} />
+                      </View>
+                    </Pressable>
+                  ))}
+                </Card>
+              ) : null}
+
+              <Card style={styles.card}>
+                <View style={styles.cardTitleRow}>
+                  <Ionicons name="add-circle-outline" size={18} color={theme.text} />
+                  <ThemedText type="smallBold">Start something new</ThemedText>
+                </View>
+                <TextField
+                  placeholder="e.g. Deep work: finish report"
+                  value={taskInput}
+                  onChangeText={setTaskInput}
+                />
+                <Button
+                  label="Start timer"
+                  icon="play"
+                  disabled={!taskInput.trim()}
+                  loading={starting}
+                  onPress={handleStart}
+                />
+              </Card>
+            </>
           )}
 
           <View style={styles.statsRow}>
@@ -152,16 +238,33 @@ export default function TimerScreen() {
               <ThemedText type="title" style={styles.statNumber}>
                 {formatElapsed(todaySeconds)}
               </ThemedText>
-              <ThemedText themeColor="textSecondary">focused today</ThemedText>
+              <View style={styles.statLabelRow}>
+                <Ionicons name="flash-outline" size={14} color={theme.textSecondary} />
+                <ThemedText themeColor="textSecondary" type="small">
+                  focused today
+                </ThemedText>
+              </View>
+            </Card>
+            <Card style={[styles.statCard, { flex: 1 }]}>
+              <ThemedText type="title" style={styles.statNumber}>
+                {todaySessions.length}
+              </ThemedText>
+              <View style={styles.statLabelRow}>
+                <Ionicons name="checkmark-done-outline" size={14} color={theme.textSecondary} />
+                <ThemedText themeColor="textSecondary" type="small">
+                  sessions today
+                </ThemedText>
+              </View>
             </Card>
           </View>
 
           <View style={styles.sectionHeader}>
             <ThemedText type="smallBold">Recent sessions</ThemedText>
-            <Pressable onPress={() => router.push('/timer/history')}>
+            <Pressable onPress={() => router.push('/timer/history')} style={styles.viewAllRow}>
               <ThemedText type="small" themeColor="accent">
                 View all
               </ThemedText>
+              <Ionicons name="chevron-forward" size={14} color={theme.accent} />
             </Pressable>
           </View>
 
@@ -173,6 +276,9 @@ export default function TimerScreen() {
             ) : (
               recentSessions.map((s) => (
                 <View key={s.id} style={styles.sessionRow}>
+                  <View style={[styles.historyIconCircle, { backgroundColor: theme.backgroundSelected }]}>
+                    <Ionicons name="time-outline" size={16} color={theme.textSecondary} />
+                  </View>
                   <View style={{ flex: 1 }}>
                     <ThemedText type="smallBold" numberOfLines={1}>
                       {s.task_description}
@@ -208,27 +314,69 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   scroll: { gap: Spacing.three, paddingBottom: Spacing.six },
+  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  headerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pageTitle: { fontSize: 24 },
   card: { gap: Spacing.three },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  continueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  resumeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   timerCard: { alignItems: 'center', gap: Spacing.two },
+  liveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+  },
   activeLabel: { opacity: 0.7 },
+  liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  liveDot: { width: 7, height: 7, borderRadius: Radius.pill },
+  liveText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
   taskText: { fontSize: 20, textAlign: 'center' },
-  elapsedText: { fontSize: 40, fontVariant: ['tabular-nums'], fontWeight: '700' },
+  elapsedText: { fontSize: 44, fontVariant: ['tabular-nums'], fontWeight: '700', letterSpacing: 1 },
   statsRow: { flexDirection: 'row', gap: Spacing.three },
-  statCard: { alignItems: 'center', gap: 2 },
-  statNumber: { fontSize: 28 },
+  statCard: { alignItems: 'center', gap: 4 },
+  statNumber: { fontSize: 26 },
+  statLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: Spacing.two,
   },
+  viewAllRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   sessionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.two,
     paddingVertical: Spacing.two,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#00000015',
+  },
+  historyIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

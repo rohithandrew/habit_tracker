@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
-import { ContributionGrid, ContributionLegend } from '@/components/contribution-grid';
+import { ContributionGrid } from '@/components/contribution-grid';
 import { HabitFormModal } from '@/components/habit-form-modal';
 import type { HabitFormValues } from '@/components/habit-form';
 import { ThemedText } from '@/components/themed-text';
@@ -23,8 +23,6 @@ import { cancelHabitReminder, syncHabitReminder } from '@/lib/notifications';
 import { computeCurrentStreak } from '@/lib/streaks';
 import type { Habit, HabitLog } from '@/lib/types';
 
-const HISTORY_DAYS = 14 * 7;
-
 export default function HabitDetailScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
@@ -40,12 +38,8 @@ export default function HabitDetailScreen() {
     if (!id) return;
     setLoading(true);
     try {
-      const since = new Date();
-      since.setDate(since.getDate() - HISTORY_DAYS);
-      const [fetchedHabit, fetchedLogs] = await Promise.all([
-        fetchHabitById(id),
-        fetchLogsForHabit(id, since),
-      ]);
+      const fetchedHabit = await fetchHabitById(id);
+      const fetchedLogs = await fetchLogsForHabit(id, new Date(fetchedHabit.created_at));
       setHabit(fetchedHabit);
       setLogs(fetchedLogs);
       navigation.setOptions({ title: `${fetchedHabit.title} (${scheduleLabel(fetchedHabit.schedule_data)})` });
@@ -114,6 +108,13 @@ export default function HabitDetailScreen() {
   const ended = isHabitEffectivelyArchived(habit);
   const streak = computeCurrentStreak(habit, logs);
 
+  const createdAt = new Date(habit.created_at);
+  createdAt.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysSinceCreated =
+    Math.round((today.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -131,18 +132,15 @@ export default function HabitDetailScreen() {
             </Card>
             <Card style={[styles.statsCard, { flex: 1 }]}>
               <ThemedText type="title" style={styles.statNumber}>
-                {doneCount}
+                {doneCount}/{daysSinceCreated}
               </ThemedText>
-              <ThemedText themeColor="textSecondary">
-                in last {Math.round(HISTORY_DAYS / 7)} weeks
-              </ThemedText>
+              <ThemedText themeColor="textSecondary">days done ✅</ThemedText>
             </Card>
           </View>
 
-          <Card style={{ marginTop: Spacing.three }}>
+          <Card style={styles.historyCard}>
             <ThemedText type="smallBold">History</ThemedText>
-            <ContributionGrid logs={logs} onSelectDate={() => {}} />
-            <ContributionLegend />
+            <ContributionGrid logs={logs} onSelectDate={() => {}} binary />
           </Card>
 
           <View style={styles.actions}>
@@ -190,6 +188,7 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: Spacing.three },
   statsCard: { alignItems: 'center', gap: 2 },
   statNumber: { fontSize: 36 },
-  actions: { gap: Spacing.two, marginTop: Spacing.three },
+  historyCard: { gap: Spacing.three },
+  actions: { gap: Spacing.two },
   deleteButton: { alignItems: 'center', paddingVertical: Spacing.two },
 });

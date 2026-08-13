@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titleLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, marginRight: Spacing.two },
-  title: { fontSize: 18, flexShrink: 1 },
+  title: { fontSize: 18, fontWeight: 'medium', flexShrink: 1 },
   icon: { fontSize: 16 },
   streakBadge: { fontSize: 12 },
   scheduleText: { fontWeight: '500', fontSize: 14 },
