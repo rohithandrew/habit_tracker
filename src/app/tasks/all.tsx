@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DotsLoader } from '@/components/dots-loader';
 import { MonthCalendar } from '@/components/month-calendar';
 import { TaskComposer } from '@/components/task-composer';
 import { ThemedText } from '@/components/themed-text';
@@ -92,12 +93,12 @@ export default function AllTasksScreen() {
             </Pressable>
           </View>
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             All tasks
           </ThemedText>
 
           {loading ? (
-            <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+            <DotsLoader />
           ) : tasks.length === 0 ? (
             <ThemedText themeColor="textSecondary" style={styles.emptyText}>
               No tasks yet. Tap a date to add one.
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Spacing.two,
   },
-  sectionTitle: { marginTop: Spacing.three, fontSize: 21 },
+  sectionTitle: { marginTop: Spacing.three },
   emptyText: { fontWeight: '400' },
   taskRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   taskBar: { width: 4, height: 24, borderRadius: 2 },

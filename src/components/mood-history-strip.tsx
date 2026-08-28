@@ -1,6 +1,5 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { toDateKey } from '@/lib/habits';
@@ -22,26 +21,24 @@ export function MoodHistoryStrip({ days, entries }: MoodHistoryStripProps) {
   });
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-      <View style={styles.row}>
-        {cells.map((key) => {
-          const mood = byDate.get(key);
-          return (
-            <View
-              key={key}
-              style={[
-                styles.segment,
-                { backgroundColor: mood ? MOOD_COLORS[mood] : theme.backgroundSelected },
-              ]}
-            />
-          );
-        })}
-      </View>
-    </ScrollView>
+    <View style={styles.row}>
+      {cells.map((key) => {
+        const mood = byDate.get(key);
+        return (
+          <View
+            key={key}
+            style={[
+              styles.segment,
+              { backgroundColor: mood ? MOOD_COLORS[mood] : theme.backgroundSelected },
+            ]}
+          />
+        );
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 3, paddingVertical: Spacing.two },
-  segment: { width: 8, height: 32, borderRadius: 4 },
+  segment: { flex: 1, height: 32, borderRadius: 4 },
 });

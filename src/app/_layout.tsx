@@ -2,8 +2,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 
+import { DotsLoader } from '@/components/dots-loader';
 import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { configureNotificationHandler } from '@/lib/notifications';
@@ -43,7 +44,7 @@ function RootNavigator() {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.background }}>
-        <ActivityIndicator color={theme.primary} />
+        <DotsLoader color={theme.primary} size={10} />
       </View>
     );
   }

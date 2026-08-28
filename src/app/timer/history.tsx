@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BarChart, type BarChartDatum } from '@/components/bar-chart';
 import { Card } from '@/components/card';
+import { DotsLoader } from '@/components/dots-loader';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -67,18 +68,18 @@ export default function TimerHistoryScreen() {
           </View>
 
           <Card>
-            <ThemedText type="smallBold" style={{ marginBottom: Spacing.three }}>
+            <ThemedText type="sectionTitle" style={{ marginBottom: Spacing.three }}>
               Minutes focused
             </ThemedText>
             <BarChart data={chartData} />
           </Card>
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             All sessions
           </ThemedText>
           <Card style={styles.card}>
             {loading ? (
-              <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+              <DotsLoader />
             ) : sessions.length === 0 ? (
               <ThemedText themeColor="textSecondary">No sessions in the last 30 days.</ThemedText>
             ) : (

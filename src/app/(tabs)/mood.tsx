@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/card';
+import { DotsLoader } from '@/components/dots-loader';
 import { MoodHistoryStrip } from '@/components/mood-history-strip';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -112,7 +113,7 @@ export default function MoodScreen() {
           </ThemedText>
 
           <Card style={styles.card}>
-            <ThemedText type="smallBold">
+            <ThemedText type="sectionTitle">
               {todayEntry ? "Today's mood" : 'How are you feeling today?'}
             </ThemedText>
             <View style={styles.moodRow}>
@@ -148,12 +149,12 @@ export default function MoodScreen() {
             ) : null}
           </Card>
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionSpacing}>
             Last 30 days
           </ThemedText>
           <Card>
             {loading ? (
-              <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+              <DotsLoader />
             ) : (
               <MoodHistoryStrip
                 days={30}
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
   moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
   moodButton: { alignItems: 'center', gap: 4, flex: 1, paddingVertical: Spacing.two, borderRadius: 12 },
   moodEmoji: { fontSize: 28 },
-  sectionTitle: { marginTop: Spacing.two },
+  sectionSpacing: { marginTop: Spacing.two },
   periodLink: {},
   periodCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

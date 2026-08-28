@@ -1,11 +1,12 @@
 import { router, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
+import { DotsLoader } from '@/components/dots-loader';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -134,7 +135,7 @@ export default function FriendsScreen() {
           </ThemedText>
 
           <Card style={styles.card}>
-            <ThemedText type="smallBold">Add a friend</ThemedText>
+            <ThemedText type="sectionTitle">Add a friend</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Search by exact username — there's no public directory.
             </ThemedText>
@@ -194,12 +195,12 @@ export default function FriendsScreen() {
           </Card>
 
           {loading ? (
-            <ActivityIndicator style={{ marginTop: Spacing.four }} />
+            <DotsLoader style={{ marginTop: Spacing.four, alignSelf: 'center' }} />
           ) : (
             <>
               {incoming.length > 0 ? (
                 <>
-                  <ThemedText type="smallBold" style={styles.sectionTitle}>
+                  <ThemedText type="sectionTitle" style={styles.sectionTitle}>
                     Requests
                   </ThemedText>
                   <Card style={styles.card}>
@@ -235,7 +236,7 @@ export default function FriendsScreen() {
 
               {outgoing.length > 0 ? (
                 <>
-                  <ThemedText type="smallBold" style={styles.sectionTitle}>
+                  <ThemedText type="sectionTitle" style={styles.sectionTitle}>
                     Sent
                   </ThemedText>
                   <Card style={styles.card}>
@@ -262,7 +263,7 @@ export default function FriendsScreen() {
                 </>
               ) : null}
 
-              <ThemedText type="smallBold" style={styles.sectionTitle}>
+              <ThemedText type="sectionTitle" style={styles.sectionTitle}>
                 Your friends {accepted.length > 0 ? `(${accepted.length})` : ''}
               </ThemedText>
               {accepted.length === 0 ? (

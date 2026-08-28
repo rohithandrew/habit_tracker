@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
+import { DotsLoader } from '@/components/dots-loader';
 import { HabitFormModal } from '@/components/habit-form-modal';
 import type { HabitFormValues } from '@/components/habit-form';
 import { StickyNotesCanvas } from '@/components/sticky-notes-canvas';
@@ -198,7 +199,9 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <TasksWidget tasks={tasks} />
+          <View style={styles.tasksWidgetWrap}>
+            <TasksWidget tasks={tasks} />
+          </View>
 
           {friendsWithUnreadNotes.length > 0 ? (
             <ScrollView
@@ -232,7 +235,7 @@ export default function HomeScreen() {
             canAuthorNote={false}
             onNotesChange={setStickyNotes}>
             {loading ? (
-              <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+              <DotsLoader />
             ) : activeHabits.length === 0 ? (
               <View style={styles.emptyState}>
                 <ThemedText themeColor="textSecondary">
@@ -258,7 +261,7 @@ export default function HomeScreen() {
               <Pressable
                 style={styles.endedHeader}
                 onPress={() => setEndedExpanded((v) => !v)}>
-                <ThemedText type="smallBold">
+                <ThemedText type="sectionTitle">
                   Ended ({endedHabits.length})
                 </ThemedText>
                 <ThemedText themeColor="textSecondary">{endedExpanded ? '▲' : '▼'}</ThemedText>
@@ -309,11 +312,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTitle: { fontSize: 26, fontWeight: '700' },
-  dateLabel: { fontWeight: '400', fontSize: 13 },
+  dateLabel: { fontWeight: '400', fontSize: 15 },
+  tasksWidgetWrap: { marginTop: Spacing.two },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: Spacing.two,
   },
   sectionTitle: { fontSize: 20 },
   emptyState: { paddingVertical: Spacing.three },

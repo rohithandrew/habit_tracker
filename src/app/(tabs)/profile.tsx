@@ -1,12 +1,13 @@
 import { Image } from 'expo-image';
 import { Share } from 'react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
+import { DotsLoader } from '@/components/dots-loader';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -55,7 +56,7 @@ export default function ProfileScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={[styles.safeArea, styles.centered]}>
-          <ActivityIndicator color={theme.primary} />
+          <DotsLoader color={theme.primary} size={10} />
         </SafeAreaView>
       </ThemedView>
     );
@@ -196,7 +197,7 @@ export default function ProfileScreen() {
             <Button label="Save profile" onPress={saveProfile} loading={savingProfile} />
           </Card>
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             Health
           </ThemedText>
           <Card style={styles.card}>
@@ -222,7 +223,7 @@ export default function ProfileScreen() {
             <Button label="Save" onPress={saveHealthSettings} loading={savingHealth} />
           </Card>
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             Notifications
           </ThemedText>
           <Card style={styles.card}>
@@ -245,7 +246,7 @@ export default function ProfileScreen() {
             <Button label="Save" onPress={saveNotificationSettings} loading={savingNotifications} />
           </Card>
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             Appearance
           </ThemedText>
           <Card style={styles.card}>
@@ -275,7 +276,7 @@ export default function ProfileScreen() {
             />
           </Card>
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             Your data
           </ThemedText>
           <Card style={styles.card}>

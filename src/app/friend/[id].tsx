@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
 import { ContributionGrid, ContributionLegend } from '@/components/contribution-grid';
+import { DotsLoader } from '@/components/dots-loader';
 import { MoodHistoryStrip } from '@/components/mood-history-strip';
 import { StickyNotesCanvas } from '@/components/sticky-notes-canvas';
 import { ThemedText } from '@/components/themed-text';
@@ -143,8 +144,8 @@ export default function FriendDetailScreen() {
   if (loading || !grantedByMe || !friendProfile || !session) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+        <SafeAreaView style={[styles.safeArea, styles.centered]}>
+          <DotsLoader />
         </SafeAreaView>
       </ThemedView>
     );
@@ -168,7 +169,7 @@ export default function FriendDetailScreen() {
 
           {grantedToMe?.can_view_habits ? (
             <Card style={styles.card}>
-              <ThemedText type="smallBold">Activity</ThemedText>
+              <ThemedText type="sectionTitle">Activity</ThemedText>
               <StickyNotesCanvas
                 notes={stickyNotes}
                 currentUserId={session.user.id}
@@ -184,7 +185,7 @@ export default function FriendDetailScreen() {
 
           {grantedToMe?.can_view_timer ? (
             <Card style={styles.card}>
-              <ThemedText type="smallBold">Focus</ThemedText>
+              <ThemedText type="sectionTitle">Focus</ThemedText>
               {activeSession ? (
                 <ThemedText themeColor="textSecondary">
                   Working on: {activeSession.task_description}
@@ -197,7 +198,7 @@ export default function FriendDetailScreen() {
 
           {grantedToMe?.can_view_mood ? (
             <Card style={styles.card}>
-              <ThemedText type="smallBold">Mood (last 30 days)</ThemedText>
+              <ThemedText type="sectionTitle">Mood (last 30 days)</ThemedText>
               <MoodHistoryStrip days={30} entries={moodHistory} />
             </Card>
           ) : null}
@@ -210,7 +211,7 @@ export default function FriendDetailScreen() {
             </Card>
           ) : null}
 
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             What {friendProfile.display_name} can see of yours
           </ThemedText>
           <Card style={styles.card}>
@@ -273,6 +274,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { paddingBottom: Spacing.six, gap: Spacing.three },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   title: { fontSize: 22 },

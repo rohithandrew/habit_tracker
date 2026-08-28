@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } from 'react-native';
+import { Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 
+import { DotsLoader } from '@/components/dots-loader';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -50,7 +51,7 @@ export function Button({
       ]}
       {...rest}>
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <DotsLoader color={textColor} size={6} />
       ) : (
         <View style={styles.content}>
           {icon ? <Ionicons name={icon} size={18} color={textColor} /> : null}

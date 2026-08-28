@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
+import { DotsLoader } from '@/components/dots-loader';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -145,9 +146,6 @@ export default function TimerScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <View style={[styles.headerIcon, { backgroundColor: theme.backgroundSelected }]}>
-              <Ionicons name="timer-outline" size={20} color={theme.accent} />
-            </View>
             <ThemedText type="subtitle" style={styles.pageTitle}>
               Focus timer
             </ThemedText>
@@ -189,7 +187,9 @@ export default function TimerScreen() {
             <>
               {todaysTasks.length > 0 ? (
                 <Card style={styles.card}>
-                  <ThemedText type="smallBold">Continue today&apos;s work</ThemedText>
+                  <ThemedText type="sectionTitle">
+                    Continue today&apos;s work
+                  </ThemedText>
                   {todaysTasks.map((task) => (
                     <Pressable
                       key={task}
@@ -215,7 +215,9 @@ export default function TimerScreen() {
               <Card style={styles.card}>
                 <View style={styles.cardTitleRow}>
                   <Ionicons name="add-circle-outline" size={18} color={theme.text} />
-                  <ThemedText type="smallBold">Start something new</ThemedText>
+                  <ThemedText type="sectionTitle">
+                    Start something new
+                  </ThemedText>
                 </View>
                 <TextField
                   placeholder="e.g. Deep work: finish report"
@@ -259,7 +261,9 @@ export default function TimerScreen() {
           </View>
 
           <View style={styles.sectionHeader}>
-            <ThemedText type="smallBold">Recent sessions</ThemedText>
+            <ThemedText type="sectionTitle">
+              Recent sessions
+            </ThemedText>
             <Pressable onPress={() => router.push('/timer/history')} style={styles.viewAllRow}>
               <ThemedText type="small" themeColor="accent">
                 View all
@@ -268,17 +272,14 @@ export default function TimerScreen() {
             </Pressable>
           </View>
 
-          <Card style={styles.card}>
+          <Card style={styles.recentCard}>
             {loading ? (
-              <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+              <DotsLoader />
             ) : recentSessions.length === 0 ? (
               <ThemedText themeColor="textSecondary">No sessions yet — start your first one above.</ThemedText>
             ) : (
               recentSessions.map((s) => (
                 <View key={s.id} style={styles.sessionRow}>
-                  <View style={[styles.historyIconCircle, { backgroundColor: theme.backgroundSelected }]}>
-                    <Ionicons name="time-outline" size={16} color={theme.textSecondary} />
-                  </View>
                   <View style={{ flex: 1 }}>
                     <ThemedText type="smallBold" numberOfLines={1}>
                       {s.task_description}
@@ -315,15 +316,9 @@ const styles = StyleSheet.create({
   },
   scroll: { gap: Spacing.three, paddingBottom: Spacing.six },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  headerIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   pageTitle: { fontSize: 24 },
   card: { gap: Spacing.three },
+  recentCard: { gap: Spacing.three, paddingVertical: Spacing.three, paddingHorizontal: Spacing.four },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   continueRow: {
     flexDirection: 'row',
@@ -371,12 +366,5 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#00000015',
-  },
-  historyIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
+import { DotsLoader } from '@/components/dots-loader';
 import { MonthCalendar } from '@/components/month-calendar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -69,7 +70,7 @@ export default function PeriodCalculatorScreen() {
           </ThemedText>
 
           {loading ? (
-            <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+            <DotsLoader style={{ alignSelf: 'center', marginTop: Spacing.four }} />
           ) : !prediction ? (
             <Card style={styles.card}>
               <ThemedText themeColor="textSecondary">
@@ -95,7 +96,7 @@ export default function PeriodCalculatorScreen() {
           )}
 
           <Card>
-            <ThemedText type="smallBold" style={{ marginBottom: Spacing.two }}>
+            <ThemedText type="sectionTitle" style={{ marginBottom: Spacing.two }}>
               Calendar
             </ThemedText>
             <MonthCalendar

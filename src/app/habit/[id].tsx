@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { ContributionGrid } from '@/components/contribution-grid';
+import { DotsLoader } from '@/components/dots-loader';
 import { HabitFormModal } from '@/components/habit-form-modal';
 import type { HabitFormValues } from '@/components/habit-form';
 import { ThemedText } from '@/components/themed-text';
@@ -97,8 +98,8 @@ export default function HabitDetailScreen() {
   if (loading || !habit) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <ThemedText themeColor="textSecondary">Loading…</ThemedText>
+        <SafeAreaView style={[styles.safeArea, styles.centered]}>
+          <DotsLoader />
         </SafeAreaView>
       </ThemedView>
     );
@@ -139,7 +140,7 @@ export default function HabitDetailScreen() {
           </View>
 
           <Card style={styles.historyCard}>
-            <ThemedText type="smallBold">History</ThemedText>
+            <ThemedText type="sectionTitle">History</ThemedText>
             <ContributionGrid logs={logs} onSelectDate={() => {}} binary />
           </Card>
 
@@ -184,6 +185,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { paddingBottom: Spacing.six, gap: Spacing.three },
   statsRow: { flexDirection: 'row', gap: Spacing.three },
   statsCard: { alignItems: 'center', gap: 2 },
