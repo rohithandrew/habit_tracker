@@ -11,7 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { toDateKey } from '@/lib/habits';
+import { fromDateKey, toDateKey } from '@/lib/habits';
 import { useAuth } from '@/lib/auth-context';
 import { fetchMoodHistory, upsertMood } from '@/lib/mood-api';
 import { MOOD_EMOJIS, MOOD_LABELS } from '@/lib/types';
@@ -26,9 +26,11 @@ export default function MoodScreen() {
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(toDateKey(new Date()));
 
   const todayKey = toDateKey(new Date());
-  const todayEntry = history.find((e) => e.date === todayKey) ?? null;
+  const isToday = selectedDate === todayKey;
+  const selectedEntry = history.find((e) => e.date === selectedDate) ?? null;
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -38,13 +40,16 @@ export default function MoodScreen() {
       since.setDate(since.getDate() - 30);
       const rows = await fetchMoodHistory(session.user.id, since);
       setHistory(rows);
-      setNote(rows.find((e) => e.date === toDateKey(new Date()))?.note ?? '');
     } catch (err) {
       Alert.alert('Could not load mood history', err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   }, [session]);
+
+  useEffect(() => {
+    setNote(selectedEntry?.note ?? '');
+  }, [selectedDate, selectedEntry?.note]);
 
   useEffect(() => {
     load();
@@ -59,8 +64,8 @@ export default function MoodScreen() {
     if (!session) return;
     setSaving(true);
     try {
-      const entry = await upsertMood(session.user.id, todayKey, mood, note.trim() || null);
-      setHistory((prev) => [...prev.filter((e) => e.date !== todayKey), entry]);
+      const entry = await upsertMood(session.user.id, selectedDate, mood, note.trim() || null);
+      setHistory((prev) => [...prev.filter((e) => e.date !== selectedDate), entry]);
     } catch (err) {
       Alert.alert('Could not save', err instanceof Error ? err.message : String(err));
     } finally {
@@ -69,11 +74,11 @@ export default function MoodScreen() {
   }
 
   async function handleSaveNote() {
-    if (!session || !todayEntry) return;
+    if (!session || !selectedEntry) return;
     setSaving(true);
     try {
-      const entry = await upsertMood(session.user.id, todayKey, todayEntry.mood, note.trim() || null);
-      setHistory((prev) => [...prev.filter((e) => e.date !== todayKey), entry]);
+      const entry = await upsertMood(session.user.id, selectedDate, selectedEntry.mood, note.trim() || null);
+      setHistory((prev) => [...prev.filter((e) => e.date !== selectedDate), entry]);
     } catch (err) {
       Alert.alert('Could not save note', err instanceof Error ? err.message : String(err));
     } finally {
@@ -113,39 +118,60 @@ export default function MoodScreen() {
           </ThemedText>
 
           <Card style={styles.card}>
-            <ThemedText type="sectionTitle">
-              {todayEntry ? "Today's mood" : 'How are you feeling today?'}
-            </ThemedText>
+            <View style={styles.cardTitleRow}>
+              <ThemedText type="sectionTitle">
+                {isToday
+                  ? selectedEntry
+                    ? "Today's mood"
+                    : 'How are you feeling today?'
+                  : fromDateKey(selectedDate).toLocaleDateString(undefined, {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+              </ThemedText>
+              {!isToday ? (
+                <Pressable onPress={() => setSelectedDate(todayKey)} hitSlop={8}>
+                  <ThemedText type="small" themeColor="accent">
+                    Back to today
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
             <View style={styles.moodRow}>
               {([1, 2, 3, 4, 5] as const).map((m) => {
-                const selected = todayEntry?.mood === m;
+                const selected = selectedEntry?.mood === m;
                 return (
                   <Pressable
                     key={m}
                     onPress={() => handleSelectMood(m)}
                     disabled={saving}
-                    style={[
-                      styles.moodButton,
-                      selected && { backgroundColor: theme.primarySoft },
-                    ]}>
-                    <ThemedText style={styles.moodEmoji}>{MOOD_EMOJIS[m]}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
+                    style={[styles.moodButton, selected && { backgroundColor: theme.primary }]}>
+                    <ThemedText style={[styles.moodEmoji, selected && styles.moodEmojiSelected]}>
+                      {MOOD_EMOJIS[m]}
+                    </ThemedText>
+                    <ThemedText
+                      type="small"
+                      themeColor={selected ? 'onPrimary' : 'textSecondary'}
+                      style={selected && styles.moodLabelSelected}>
                       {MOOD_LABELS[m]}
                     </ThemedText>
                   </Pressable>
                 );
               })}
             </View>
-            {todayEntry ? (
+            {isToday && selectedEntry ? (
               <View style={{ gap: Spacing.two }}>
                 <TextField
-                  placeholder="Add a private note (only you can see this)"
+                  placeholder="Add a note"
                   value={note}
                   onChangeText={setNote}
                   onBlur={handleSaveNote}
                   multiline
                 />
               </View>
+            ) : !isToday && selectedEntry?.note ? (
+              <ThemedText themeColor="textSecondary">{selectedEntry.note}</ThemedText>
             ) : null}
           </Card>
 
@@ -159,6 +185,8 @@ export default function MoodScreen() {
               <MoodHistoryStrip
                 days={30}
                 entries={history.map((e) => ({ date: e.date, mood: e.mood }))}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
               />
             )}
           </Card>
@@ -191,9 +219,12 @@ const styles = StyleSheet.create({
   scroll: { gap: Spacing.three, paddingBottom: Spacing.six },
   pageTitle: { fontSize: 24 },
   card: { gap: Spacing.three },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
   moodButton: { alignItems: 'center', gap: 4, flex: 1, paddingVertical: Spacing.two, borderRadius: 12 },
   moodEmoji: { fontSize: 28 },
+  moodEmojiSelected: { fontSize: 32 },
+  moodLabelSelected: { fontWeight: '700' },
   sectionSpacing: { marginTop: Spacing.two },
   periodLink: {},
   periodCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

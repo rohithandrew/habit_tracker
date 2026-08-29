@@ -21,6 +21,7 @@ import {
   unfriend,
   updatePermission,
 } from '@/lib/friends-api';
+import { fromDateKey } from '@/lib/habits';
 import { fetchHabitLogs } from '@/lib/habits-api';
 import { fetchFriendMoodHistory } from '@/lib/mood-api';
 import { fetchStickyNotes } from '@/lib/sticky-notes-api';
@@ -40,7 +41,8 @@ export default function FriendDetailScreen() {
   const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
   const [activeSession, setActiveSession] = useState<TimerSession | null>(null);
-  const [moodHistory, setMoodHistory] = useState<Omit<MoodEntry, 'note'>[]>([]);
+  const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
+  const [selectedMoodDate, setSelectedMoodDate] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session || !id) return;
@@ -199,7 +201,34 @@ export default function FriendDetailScreen() {
           {grantedToMe?.can_view_mood ? (
             <Card style={styles.card}>
               <ThemedText type="sectionTitle">Mood (last 30 days)</ThemedText>
-              <MoodHistoryStrip days={30} entries={moodHistory} />
+              <MoodHistoryStrip
+                days={30}
+                entries={moodHistory}
+                selectedDate={selectedMoodDate ?? undefined}
+                onSelectDate={setSelectedMoodDate}
+              />
+              {selectedMoodDate ? (
+                (() => {
+                  const entry = moodHistory.find((e) => e.date === selectedMoodDate);
+                  if (!entry) return null;
+                  return (
+                    <View style={styles.moodNote}>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {fromDateKey(selectedMoodDate).toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </ThemedText>
+                      <ThemedText>{entry.note || 'No note for this day.'}</ThemedText>
+                    </View>
+                  );
+                })()
+              ) : (
+                <ThemedText type="small" themeColor="textSecondary">
+                  Tap a day above to see their mood note.
+                </ThemedText>
+              )}
             </Card>
           ) : null}
 
@@ -280,6 +309,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 22 },
   sectionTitle: { marginTop: Spacing.two },
   card: { gap: Spacing.two },
+  moodNote: { gap: 2 },
   dangerZone: { flexDirection: 'row', gap: Spacing.four, marginTop: Spacing.four, justifyContent: 'center' },
   dangerButton: { paddingVertical: Spacing.two },
 });

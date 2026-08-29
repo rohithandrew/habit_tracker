@@ -13,12 +13,12 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth-context';
 import {
-  cancelFriendRequest,
-  fetchFriendships,
-  fetchProfilesByIds,
-  findUserByUsername,
-  respondToFriendRequest,
-  sendFriendRequest,
+    cancelFriendRequest,
+    fetchFriendships,
+    fetchProfilesByIds,
+    findUserByUsername,
+    respondToFriendRequest,
+    sendFriendRequest,
 } from '@/lib/friends-api';
 import type { Friendship, PublicProfile } from '@/lib/types';
 
@@ -135,10 +135,17 @@ export default function FriendsScreen() {
           </ThemedText>
 
           <Card style={styles.card}>
-            <ThemedText type="sectionTitle">Add a friend</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Search by exact username — there's no public directory.
-            </ThemedText>
+            <View style={{ gap: 7 }}>
+              <ThemedText type="sectionTitle" style={{ fontSize: 18 }}>
+                Add a friend
+              </ThemedText>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={{ fontSize: 14, lineHeight: 22, fontWeight: '400' }}>
+                Search by username, there's no public directory.
+              </ThemedText>
+            </View>
             <View style={styles.searchRow}>
               <View style={{ flex: 1 }}>
                 <TextField
@@ -273,23 +280,27 @@ export default function FriendsScreen() {
                   </ThemedText>
                 </Card>
               ) : (
-                <Card style={styles.card}>
+                <Card style={styles.friendsCard}>
                   {accepted.map((f) => {
                     const otherId = f.requester_id === session.user.id ? f.addressee_id : f.requester_id;
                     const p = profiles[otherId];
                     return (
                       <Pressable
                         key={f.id}
-                        style={styles.requestRow}
+                        style={styles.friendRow}
                         onPress={() => router.push(`/friend/${otherId}`)}>
-                        <Avatar avatarKey={p?.avatar_emoji} />
-                        <View style={{ flex: 1 }}>
-                          <ThemedText type="smallBold">{p?.display_name ?? 'Friend'}</ThemedText>
-                          <ThemedText type="small" themeColor="textSecondary">
+                        <Avatar avatarKey={p?.avatar_emoji} size={48} />
+                        <View style={{ flex: 1, gap: 4 }}>
+                          <ThemedText type="smallBold" style={{ fontSize: 18 }}>
+                            {p?.display_name ?? 'Friend'}
+                          </ThemedText>
+                          <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '400' }}>
                             @{p?.username}
                           </ThemedText>
                         </View>
-                        <ThemedText themeColor="textSecondary">›</ThemedText>
+                        <ThemedText themeColor="textSecondary" style={{ fontSize: 25 }}>
+                          ›
+                        </ThemedText>
                       </Pressable>
                     );
                   })}
@@ -320,5 +331,7 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start' },
   resultRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   requestRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.one },
+  friendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: 2 },
+  friendsCard: { gap: Spacing.three, paddingVertical: Spacing.three },
   requestActions: { alignItems: 'flex-end', gap: Spacing.two },
 });

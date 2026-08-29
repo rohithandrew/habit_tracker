@@ -223,7 +223,9 @@ export default function HomeScreen() {
               Weekly Habits
             </ThemedText>
             <Pressable onPress={() => setShowAddModal(true)} hitSlop={8} style={{ marginRight: Spacing.two }}>
-              <ThemedText type="small">+ Add habit</ThemedText>
+              <ThemedText type="small" themeColor="accent">
+                + Add habit
+              </ThemedText>
             </Pressable>
           </View>
 
