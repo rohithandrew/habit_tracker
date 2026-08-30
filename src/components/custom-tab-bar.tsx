@@ -17,6 +17,7 @@ const INACTIVE_ICON = '#8C8C8C';
 const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   index: 'home-outline',
   timer: 'timer-outline',
+  todo: 'checkbox-outline',
   mood: 'happy-outline',
   friends: 'people-outline',
 };

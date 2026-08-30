@@ -54,46 +54,46 @@ export async function cancelHabitReminder(habitId: string): Promise<void> {
   await Notifications.cancelScheduledNotificationAsync(habitReminderId(habitId)).catch(() => {});
 }
 
-const MOOD_REMINDER_ID = 'mood-check-in-reminder';
+const HABITS_REMINDER_ID = 'habits-daily-reminder';
+// IST has a fixed +5:30 offset with no DST, so it can be handled as a constant
+// rather than pulling in a full timezone library.
+const IST_OFFSET_MIN = 5.5 * 60;
 
-export async function syncMoodReminder(time: string | null): Promise<void> {
-  if (Platform.OS === 'web') return;
-  await Notifications.cancelScheduledNotificationAsync(MOOD_REMINDER_ID).catch(() => {});
-  if (!time) return;
-
+/** Next UTC instant matching `time` (a 24h "HH:MM" string) read as IST wall-clock time,
+ * today if it hasn't passed yet, otherwise tomorrow. */
+function nextIstOccurrence(time: string): Date {
   const { hour, minute } = parseTimeString(time);
-  await Notifications.scheduleNotificationAsync({
-    identifier: MOOD_REMINDER_ID,
-    content: {
-      title: 'How are you feeling today?',
-      body: 'Take a moment for a quick mood check-in.',
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour,
-      minute,
-    },
-  });
+  const now = new Date();
+  const nowIst = new Date(now.getTime() + IST_OFFSET_MIN * 60000);
+  const y = nowIst.getUTCFullYear();
+  const m = nowIst.getUTCMonth();
+  const d = nowIst.getUTCDate();
+  let targetMs = Date.UTC(y, m, d, hour, minute) - IST_OFFSET_MIN * 60000;
+  if (targetMs <= now.getTime()) targetMs += 24 * 60 * 60 * 1000;
+  return new Date(targetMs);
 }
 
-const WEEKLY_RECAP_ID = 'weekly-recap';
-
-export async function syncWeeklyRecap(enabled: boolean): Promise<void> {
+/**
+ * A single reminder covering every habit, not per-habit like `syncHabitReminder`.
+ * `time` is an IST "HH:MM" wall-clock time; pass `allDoneToday: true` to skip
+ * scheduling entirely since there'd be nothing left to remind about. Only ever
+ * schedules the next single occurrence — call again (e.g. whenever the Home
+ * screen loads) to keep it rolling forward and re-evaluate completion state.
+ */
+export async function syncHabitsReminder(time: string | null, allDoneToday: boolean): Promise<void> {
   if (Platform.OS === 'web') return;
-  await Notifications.cancelScheduledNotificationAsync(WEEKLY_RECAP_ID).catch(() => {});
-  if (!enabled) return;
+  await Notifications.cancelScheduledNotificationAsync(HABITS_REMINDER_ID).catch(() => {});
+  if (!time || allDoneToday) return;
 
   await Notifications.scheduleNotificationAsync({
-    identifier: WEEKLY_RECAP_ID,
+    identifier: HABITS_REMINDER_ID,
     content: {
-      title: 'Your weekly recap is ready',
-      body: 'See how your habits went this week.',
+      title: 'Habit reminder',
+      body: "You still have habits to complete today — don't break the streak!",
     },
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-      weekday: 1, // Sunday
-      hour: 18,
-      minute: 0,
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: nextIstOccurrence(time),
     },
   });
 }

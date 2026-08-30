@@ -18,7 +18,7 @@ type Range = 7 | 30;
 
 export default function TimerHistoryScreen() {
   const theme = useTheme();
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const [range, setRange] = useState<Range>(7);
   const [sessions, setSessions] = useState<TimerSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +46,16 @@ export default function TimerHistoryScreen() {
       value: Math.round(totalSeconds / 60),
     };
   });
+
+  if (profile && !profile.timer_tracking_enabled) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={[styles.safeArea, styles.centered]}>
+          <ThemedText themeColor="textSecondary">Focus timer is off.</ThemedText>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -119,6 +129,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { gap: Spacing.three, paddingBottom: Spacing.six },
   rangeRow: { flexDirection: 'row', gap: Spacing.two },
   rangeChip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Radius.pill },

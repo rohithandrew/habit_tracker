@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -14,7 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, toDateKey } from '@/lib/habits';
 import { useAuth } from '@/lib/auth-context';
 import { fetchMoodHistory, upsertMood } from '@/lib/mood-api';
-import { MOOD_EMOJIS, MOOD_LABELS } from '@/lib/types';
+import { MOOD_ICONS, MOOD_LABELS } from '@/lib/types';
 import type { MoodEntry } from '@/lib/types';
 
 export default function MoodScreen() {
@@ -147,9 +148,11 @@ export default function MoodScreen() {
                     onPress={() => handleSelectMood(m)}
                     disabled={saving}
                     style={[styles.moodButton, selected && { backgroundColor: theme.primary }]}>
-                    <ThemedText style={[styles.moodEmoji, selected && styles.moodEmojiSelected]}>
-                      {MOOD_EMOJIS[m]}
-                    </ThemedText>
+                    <MaterialCommunityIcons
+                      name={MOOD_ICONS[m]}
+                      size={selected ? 32 : 28}
+                      color={selected ? theme.onPrimary : theme.text}
+                    />
                     <ThemedText
                       type="small"
                       themeColor={selected ? 'onPrimary' : 'textSecondary'}
@@ -222,8 +225,6 @@ const styles = StyleSheet.create({
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
   moodButton: { alignItems: 'center', gap: 4, flex: 1, paddingVertical: Spacing.two, borderRadius: 12 },
-  moodEmoji: { fontSize: 28 },
-  moodEmojiSelected: { fontSize: 32 },
   moodLabelSelected: { fontWeight: '700' },
   sectionSpacing: { marginTop: Spacing.two },
   periodLink: {},

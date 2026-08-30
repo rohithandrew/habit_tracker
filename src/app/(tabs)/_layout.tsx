@@ -60,6 +60,7 @@ export default function TabsLayout() {
       )}>
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="timer" options={{ title: 'Timer' }} />
+      <Tabs.Screen name="todo" options={{ title: 'Todo' }} />
       <Tabs.Screen name="mood" options={{ title: 'Mood' }} />
       <Tabs.Screen name="friends" options={{ title: 'Friends' }} />
       <Tabs.Screen name="profile" options={{ href: null }} />

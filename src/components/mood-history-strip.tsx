@@ -44,7 +44,7 @@ export function MoodHistoryStrip({ days, entries, selectedDate, onSelectDate }: 
             key={key}
             {...(onSelectDate ? { onPress: () => onSelectDate(key), hitSlop: 4 } : null)}
             style={[styles.column, needsScroll && styles.fixedColumn]}>
-            {isSelected ? <View style={[styles.dot, { backgroundColor: theme.accent }]} /> : null}
+            {isSelected ? <View style={[styles.dot, { borderColor: theme.accent }]} /> : null}
             <View
               style={[
                 styles.segment,
@@ -76,12 +76,14 @@ const styles = StyleSheet.create({
   fixedColumn: { flex: undefined, width: MIN_SEGMENT_WIDTH },
   dot: {
     position: 'absolute',
-    top: -10,
+    top: -11,
     left: '50%',
-    marginLeft: -3,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    marginLeft: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
   },
   segment: { height: 32, borderRadius: 4 },
 });

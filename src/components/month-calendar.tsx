@@ -43,6 +43,7 @@ export function MonthCalendar({
   ];
 
   const monthLabel = viewDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const todayKey = toDateKey(new Date());
 
   return (
     <View style={styles.container}>
@@ -77,6 +78,7 @@ export function MonthCalendar({
           if (!date) return <View key={`empty-${i}`} style={styles.dayCell} />;
           const key = toDateKey(date);
           const isSelected = key === selectedDate;
+          const isToday = key === todayKey;
           const isDisabled = (minDate ? key < minDate : false) || (maxDate ? key > maxDate : false);
           const tint = dayColor?.(key);
           const dot = dayDot?.(key);
@@ -88,7 +90,13 @@ export function MonthCalendar({
                 android_ripple={{ color: theme.backgroundSelected, radius: 16 }}
                 style={[
                   styles.dayCircle,
-                  tint ? { backgroundColor: tint } : isSelected ? { backgroundColor: theme.text } : null,
+                  tint
+                    ? { backgroundColor: tint }
+                    : isSelected
+                      ? { backgroundColor: theme.text }
+                      : isToday
+                        ? { backgroundColor: theme.primary }
+                        : null,
                 ]}>
                 <ThemedText
                   type="small"
@@ -96,6 +104,7 @@ export function MonthCalendar({
                     styles.dayNumber,
                     isDisabled && { opacity: 0.3 },
                     (tint || isSelected) && { color: theme.background },
+                    !tint && !isSelected && isToday && { color: theme.onPrimary },
                   ]}>
                   {date.getDate()}
                 </ThemedText>

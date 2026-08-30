@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -5,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { MOOD_EMOJIS, MOOD_LABELS } from '@/lib/types';
+import { MOOD_ICONS, MOOD_LABELS } from '@/lib/types';
 
 export function MoodCheckInModal({
   visible,
@@ -29,7 +30,7 @@ export function MoodCheckInModal({
             <View style={styles.moodRow}>
               {([1, 2, 3, 4, 5] as const).map((m) => (
                 <Pressable key={m} onPress={() => onSelect(m)} style={styles.moodButton}>
-                  <ThemedText style={styles.moodEmoji}>{MOOD_EMOJIS[m]}</ThemedText>
+                  <MaterialCommunityIcons name={MOOD_ICONS[m]} size={32} color={theme.text} />
                   <ThemedText type="small" themeColor="textSecondary">
                     {MOOD_LABELS[m]}
                   </ThemedText>
@@ -55,6 +56,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, textAlign: 'center' },
   moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
   moodButton: { alignItems: 'center', gap: Spacing.one, flex: 1 },
-  moodEmoji: { fontSize: 32 },
   skipButton: { alignItems: 'center', paddingVertical: Spacing.two },
 });

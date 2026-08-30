@@ -15,7 +15,7 @@ import { ThemedView } from '@/components/themed-view';
 import { WeeklyHabitRow } from '@/components/weekly-habit-row';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { isHabitEffectivelyArchived, isPastSchedule, toDateKey } from '@/lib/habits';
+import { isDateEligible, isHabitEffectivelyArchived, isPastSchedule, toDateKey } from '@/lib/habits';
 import {
   createHabit,
   fetchHabitLogs,
@@ -25,13 +25,27 @@ import {
 } from '@/lib/habits-api';
 import { useAuth } from '@/lib/auth-context';
 import { fetchFriendships, fetchProfilesByIds } from '@/lib/friends-api';
-import { syncHabitReminder } from '@/lib/notifications';
+import { syncHabitReminder, syncHabitsReminder } from '@/lib/notifications';
 import { fetchStickyNotes, markStickyNoteRead } from '@/lib/sticky-notes-api';
 import { computeCurrentStreak, reachedMilestone } from '@/lib/streaks';
 import { fetchUpcomingTasks } from '@/lib/tasks-api';
 import type { Habit, HabitLog, PublicProfile, StickyNote, Task } from '@/lib/types';
 
 const CONTRIBUTION_HISTORY_DAYS = 14 * 7;
+
+/** Whether every active, today-eligible habit already has a 'done' log for today. */
+function computeAllDoneToday(habitsList: Habit[], logsList: HabitLog[]): boolean {
+  const now = new Date();
+  const todayKey = toDateKey(now);
+  const activeToday = habitsList.filter(
+    (h) => !isHabitEffectivelyArchived(h) && isDateEligible(h.schedule_data, now)
+  );
+  if (activeToday.length === 0) return true;
+  const doneIds = new Set(
+    logsList.filter((l) => l.date === todayKey && l.status === 'done').map((l) => l.habit_id)
+  );
+  return activeToday.every((h) => doneIds.has(h.id));
+}
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -77,6 +91,13 @@ export default function HomeScreen() {
         setTasks(fetchedTasks);
         setStickyNotes(notes);
 
+        syncHabitsReminder(
+          profile?.habit_reminder_time ?? null,
+          computeAllDoneToday(fetchedHabits, fetchedLogs)
+        ).catch(() => {
+          // best-effort; a failed reschedule isn't worth surfacing to the user
+        });
+
         // Mark this visit's unread notes read so their author's avatar stops showing
         // in the strip starting next visit — the note text is already visible on the
         // pin itself, so seeing it here counts as having read it.
@@ -99,7 +120,7 @@ export default function HomeScreen() {
         setRefreshing(false);
       }
     },
-    [session]
+    [session, profile?.habit_reminder_time]
   );
 
   useEffect(() => {
@@ -114,30 +135,33 @@ export default function HomeScreen() {
   async function handleToggleDay(habit: Habit, dateKey: string, currentlyDone: boolean) {
     if (!session) return;
     const previousLogs = logs;
-
-    setLogs((prev) =>
-      currentlyDone
-        ? prev.filter((l) => !(l.habit_id === habit.id && l.date === dateKey))
-        : [
-            ...prev,
-            {
-              id: `optimistic-${habit.id}-${dateKey}`,
-              habit_id: habit.id,
-              user_id: session.user.id,
-              date: dateKey,
-              status: 'done',
-              completed_at: new Date().toISOString(),
-            },
-          ]
-    );
+    const newLogs = currentlyDone
+      ? logs.filter((l) => !(l.habit_id === habit.id && l.date === dateKey))
+      : [
+          ...logs,
+          {
+            id: `optimistic-${habit.id}-${dateKey}`,
+            habit_id: habit.id,
+            user_id: session.user.id,
+            date: dateKey,
+            status: 'done' as const,
+            completed_at: new Date().toISOString(),
+          },
+        ];
+    setLogs(newLogs);
 
     try {
       await toggleHabitLog(session.user.id, habit.id, dateKey, currentlyDone);
+      if (dateKey === toDateKey(new Date())) {
+        syncHabitsReminder(
+          profile?.habit_reminder_time ?? null,
+          computeAllDoneToday(habits, newLogs)
+        ).catch(() => {
+          // best-effort; a failed reschedule isn't worth surfacing to the user
+        });
+      }
       if (!currentlyDone && dateKey === toDateKey(new Date())) {
-        const streak = computeCurrentStreak(habit, [
-          ...logs.filter((l) => !(l.habit_id === habit.id && l.date === dateKey)),
-          { id: 'x', habit_id: habit.id, user_id: session.user.id, date: dateKey, status: 'done', completed_at: null },
-        ]);
+        const streak = computeCurrentStreak(habit, newLogs);
         const milestone = reachedMilestone(streak);
         if (milestone) {
           Alert.alert(`${milestone}-day streak! 🔥`, `"${habit.title}" — ${milestone} days in a row.`);

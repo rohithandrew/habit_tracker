@@ -1,3 +1,5 @@
+import type { MaterialCommunityIcons } from '@expo/vector-icons';
+
 export type ScheduleType = 'daily' | 'weekdays' | 'x_per_week' | 'date_range' | 'single_day';
 
 /** 0 = Sunday ... 6 = Saturday, matching JS Date#getDay(). */
@@ -18,9 +20,12 @@ export interface Profile {
   mood_tracking_enabled: boolean;
   period_tracking_enabled: boolean;
   timer_tracking_enabled: boolean;
+  todo_enabled: boolean;
   onboarding_completed: boolean;
   weekly_recap_enabled: boolean;
   mood_reminder_time: string | null;
+  /** IST 'HH:MM' — when set, remind about any not-yet-done habits at this time. */
+  habit_reminder_time: string | null;
   created_at: string;
 }
 
@@ -114,6 +119,14 @@ export interface Task {
   created_at: string;
 }
 
+export interface Todo {
+  id: string;
+  user_id: string;
+  text: string;
+  done: boolean;
+  created_at: string;
+}
+
 export type StickyNoteTargetType = 'habit_grid' | 'timer_session' | 'mood_calendar';
 
 export interface StickyNote {
@@ -138,12 +151,12 @@ export const MOOD_LABELS: Record<1 | 2 | 3 | 4 | 5, string> = {
   5: 'Great',
 };
 
-export const MOOD_EMOJIS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: '😣',
-  2: '😔',
-  3: '😐',
-  4: '😊',
-  5: '😄',
+export const MOOD_ICONS: Record<1 | 2 | 3 | 4 | 5, keyof typeof MaterialCommunityIcons.glyphMap> = {
+  1: 'emoticon-cry-outline',
+  2: 'emoticon-sad-outline',
+  3: 'emoticon-neutral-outline',
+  4: 'emoticon-happy-outline',
+  5: 'emoticon-excited-outline',
 };
 
 export const MOOD_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {

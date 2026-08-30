@@ -18,7 +18,7 @@ import type { PeriodLog } from '@/lib/types';
 
 export default function PeriodCalculatorScreen() {
   const theme = useTheme();
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
 
   const [logs, setLogs] = useState<PeriodLog[]>([]);
   const [prediction, setPrediction] = useState<PeriodPrediction | null>(null);
@@ -60,6 +60,16 @@ export default function PeriodCalculatorScreen() {
   }
 
   const dayKind = classifyDay(selectedDate, logs, prediction);
+
+  if (profile && !profile.period_tracking_enabled) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={[styles.safeArea, styles.centered]}>
+          <ThemedText themeColor="textSecondary">Period tracking is off.</ThemedText>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -159,6 +169,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { gap: Spacing.three, paddingBottom: Spacing.six },
   card: { gap: Spacing.two },
   statsRow: { flexDirection: 'row', gap: Spacing.three },

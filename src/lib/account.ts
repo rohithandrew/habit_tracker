@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
  * data, not a social graph dump.
  */
 export async function exportUserData(userId: string): Promise<Record<string, unknown>> {
-  const [profile, habits, habitLogs, periodLogs, timerSessions, moodEntries, friendships, stickyNotesAuthored] =
+  const [profile, habits, habitLogs, periodLogs, timerSessions, moodEntries, friendships, stickyNotesAuthored, todos] =
     await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).single(),
       supabase.from('habits').select('*').eq('user_id', userId),
@@ -16,6 +16,7 @@ export async function exportUserData(userId: string): Promise<Record<string, unk
       supabase.from('mood_entries').select('*').eq('user_id', userId),
       supabase.from('friendships').select('*').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
       supabase.from('sticky_notes').select('*').or(`author_id.eq.${userId},owner_id.eq.${userId}`),
+      supabase.from('todos').select('*').eq('user_id', userId),
     ]);
 
   return {
@@ -28,6 +29,7 @@ export async function exportUserData(userId: string): Promise<Record<string, unk
     mood_entries: moodEntries.data,
     friendships: friendships.data,
     sticky_notes: stickyNotesAuthored.data,
+    todos: todos.data,
   };
 }
 

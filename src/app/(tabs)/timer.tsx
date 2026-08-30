@@ -28,7 +28,7 @@ function formatElapsed(seconds: number): string {
 export default function TimerScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
 
   const [activeSession, setActiveSession] = useState<TimerSession | null>(null);
   const [sessions, setSessions] = useState<TimerSession[]>([]);
@@ -125,7 +125,28 @@ export default function TimerScreen() {
     }
   }
 
-  if (!session) return null;
+  if (!session || !profile) return null;
+
+  if (!profile.timer_tracking_enabled) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={[styles.safeArea, styles.centered]}>
+          <ThemedText style={{ fontSize: 48 }}>⏱️</ThemedText>
+          <ThemedText type="subtitle" style={{ textAlign: 'center', marginTop: Spacing.three }}>
+            Focus timer is off
+          </ThemedText>
+          <ThemedText themeColor="textSecondary" style={{ textAlign: 'center', marginTop: Spacing.two }}>
+            Turn it on from Profile → Health to start tracking focus sessions.
+          </ThemedText>
+          <Pressable onPress={() => router.push('/(tabs)/profile')} style={{ marginTop: Spacing.four }}>
+            <ThemedText themeColor="accent" type="smallBold">
+              Go to Profile
+            </ThemedText>
+          </Pressable>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   const todayKey = toDateKey(new Date());
   const todaySessions = sessions.filter((s) => toDateKey(new Date(s.started_at)) === todayKey);
@@ -314,6 +335,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   scroll: { gap: Spacing.three, paddingBottom: Spacing.six },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   pageTitle: { fontSize: 24 },

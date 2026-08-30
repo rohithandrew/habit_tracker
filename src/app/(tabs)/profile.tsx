@@ -18,7 +18,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { deleteAccountData, exportUserData } from '@/lib/account';
 import { useAuth } from '@/lib/auth-context';
 import { AVATAR_KEYS, DEFAULT_AVATAR_KEY, avatarSource } from '@/lib/avatars';
-import { requestNotificationPermission, syncMoodReminder, syncWeeklyRecap } from '@/lib/notifications';
+import { requestNotificationPermission, syncHabitsReminder } from '@/lib/notifications';
 import { useSettings, type ThemeMode } from '@/lib/settings-context';
 import { supabase } from '@/lib/supabase';
 
@@ -27,6 +27,11 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string }[] = [
   { mode: 'light', label: 'Light' },
   { mode: 'dark', label: 'Dark' },
 ];
+
+const AVATARS_PER_ROW = 5;
+const AVATAR_ROWS = Array.from({ length: Math.ceil(AVATAR_KEYS.length / AVATARS_PER_ROW) }, (_, i) =>
+  AVATAR_KEYS.slice(i * AVATARS_PER_ROW, i * AVATARS_PER_ROW + AVATARS_PER_ROW)
+);
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -38,14 +43,12 @@ export default function ProfileScreen() {
   const [savingProfile, setSavingProfile] = useState(false);
 
   const [moodEnabled, setMoodEnabled] = useState(profile?.mood_tracking_enabled ?? false);
-  const [periodEnabled, setPeriodEnabled] = useState(profile?.period_tracking_enabled ?? false);
   const [timerEnabled, setTimerEnabled] = useState(profile?.timer_tracking_enabled ?? true);
-  const [savingHealth, setSavingHealth] = useState(false);
+  const [todoEnabled, setTodoEnabled] = useState(profile?.todo_enabled ?? true);
 
-  const [moodReminderEnabled, setMoodReminderEnabled] = useState(Boolean(profile?.mood_reminder_time));
-  const [moodReminderTime, setMoodReminderTime] = useState(profile?.mood_reminder_time?.slice(0, 5) ?? '20:00');
-  const [weeklyRecapEnabled, setWeeklyRecapEnabled] = useState(profile?.weekly_recap_enabled ?? false);
-  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [habitReminderEnabled, setHabitReminderEnabled] = useState(Boolean(profile?.habit_reminder_time));
+  const [habitReminderTime, setHabitReminderTime] = useState(profile?.habit_reminder_time?.slice(0, 5) ?? '20:00');
+  const [savingReminder, setSavingReminder] = useState(false);
 
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -76,46 +79,48 @@ export default function ProfileScreen() {
     await refreshProfile();
   }
 
-  async function saveHealthSettings() {
-    setSavingHealth(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        mood_tracking_enabled: moodEnabled,
-        period_tracking_enabled: periodEnabled,
-        timer_tracking_enabled: timerEnabled,
-      })
-      .eq('id', session!.user.id);
-    setSavingHealth(false);
+  async function updateHealthSetting(
+    key: 'mood_tracking_enabled' | 'timer_tracking_enabled' | 'todo_enabled',
+    value: boolean
+  ) {
+    const setLocal = {
+      mood_tracking_enabled: setMoodEnabled,
+      timer_tracking_enabled: setTimerEnabled,
+      todo_enabled: setTodoEnabled,
+    }[key];
+    setLocal(value);
+
+    const { error } = await supabase.from('profiles').update({ [key]: value }).eq('id', session!.user.id);
     if (error) {
+      setLocal(!value);
       Alert.alert('Could not save', error.message);
       return;
     }
     await refreshProfile();
   }
 
-  async function saveNotificationSettings() {
-    setSavingNotifications(true);
+  async function saveHabitReminder() {
+    setSavingReminder(true);
     try {
-      if (moodReminderEnabled || weeklyRecapEnabled) {
+      if (habitReminderEnabled) {
         await requestNotificationPermission();
       }
+      const time = habitReminderEnabled ? habitReminderTime : null;
       const { error } = await supabase
         .from('profiles')
-        .update({
-          mood_reminder_time: moodReminderEnabled ? moodReminderTime : null,
-          weekly_recap_enabled: weeklyRecapEnabled,
-        })
+        .update({ habit_reminder_time: time })
         .eq('id', session!.user.id);
       if (error) throw error;
 
-      await syncMoodReminder(moodReminderEnabled ? moodReminderTime : null);
-      await syncWeeklyRecap(weeklyRecapEnabled);
+      // Home doesn't know yet whether today's habits are already done, so this
+      // optimistically schedules the reminder; Home corrects/cancels it (based on
+      // real completion state) the next time it loads.
+      await syncHabitsReminder(time, false);
       await refreshProfile();
     } catch (err) {
       Alert.alert('Could not save', err instanceof Error ? err.message : String(err));
     } finally {
-      setSavingNotifications(false);
+      setSavingReminder(false);
     }
   }
 
@@ -172,26 +177,28 @@ export default function ProfileScreen() {
 
             <TextField label="Display name" value={displayName} onChangeText={setDisplayName} />
 
-            <View>
-              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
+            <View style={{ gap: Spacing.two }}>
+              <ThemedText type="small" themeColor="textSecondary">
                 Avatar
               </ThemedText>
-              <View style={styles.grid}>
-                {AVATAR_KEYS.map((key) => {
-                  const selected = key === avatarKey;
-                  return (
-                    <Pressable
-                      key={key}
-                      onPress={() => setAvatarKey(key)}
-                      style={[
-                        styles.avatarCell,
-                        { borderColor: selected ? theme.primary : 'transparent' },
-                      ]}>
-                      <Image source={avatarSource(key)} style={styles.avatarImage} contentFit="cover" />
-                    </Pressable>
-                  );
-                })}
-              </View>
+              {AVATAR_ROWS.map((row, i) => (
+                <View key={i} style={styles.grid}>
+                  {row.map((key) => {
+                    const selected = key === avatarKey;
+                    return (
+                      <Pressable
+                        key={key}
+                        onPress={() => setAvatarKey(key)}
+                        style={[
+                          styles.avatarCell,
+                          { borderColor: selected ? theme.primary : 'transparent' },
+                        ]}>
+                        <Image source={avatarSource(key)} style={styles.avatarImage} contentFit="cover" />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))}
             </View>
 
             <Button label="Save profile" onPress={saveProfile} loading={savingProfile} />
@@ -205,22 +212,21 @@ export default function ProfileScreen() {
               emoji="⏱️"
               title="Focus timer"
               value={timerEnabled}
-              onValueChange={setTimerEnabled}
+              onValueChange={(v) => updateHealthSetting('timer_tracking_enabled', v)}
             />
             <ToggleRow
               emoji="🙂"
               title="Mood tracking"
               value={moodEnabled}
-              onValueChange={setMoodEnabled}
+              onValueChange={(v) => updateHealthSetting('mood_tracking_enabled', v)}
             />
+            <ToggleRow emoji="🌙" title="Period cycle tracking" badge="Coming soon" />
             <ToggleRow
-              emoji="🌙"
-              title="Period cycle tracking"
-              description="Private — never shared with friends, under any setting."
-              value={periodEnabled}
-              onValueChange={setPeriodEnabled}
+              emoji="📝"
+              title="Todo list"
+              value={todoEnabled}
+              onValueChange={(v) => updateHealthSetting('todo_enabled', v)}
             />
-            <Button label="Save" onPress={saveHealthSettings} loading={savingHealth} />
           </Card>
 
           <ThemedText type="sectionTitle" style={styles.sectionTitle}>
@@ -229,21 +235,15 @@ export default function ProfileScreen() {
           <Card style={styles.card}>
             <ToggleRow
               emoji="🔔"
-              title="Mood check-in reminder"
-              value={moodReminderEnabled}
-              onValueChange={setMoodReminderEnabled}
+              title="Habit reminders"
+              description="Reminds you (IST) about any habits you haven't completed yet today."
+              value={habitReminderEnabled}
+              onValueChange={setHabitReminderEnabled}
             />
-            {moodReminderEnabled ? (
-              <TimePicker value={moodReminderTime} onChange={setMoodReminderTime} />
+            {habitReminderEnabled ? (
+              <TimePicker value={habitReminderTime} onChange={setHabitReminderTime} />
             ) : null}
-            <ToggleRow
-              emoji="📊"
-              title="Weekly recap"
-              description="A private summary of your week — never shared."
-              value={weeklyRecapEnabled}
-              onValueChange={setWeeklyRecapEnabled}
-            />
-            <Button label="Save" onPress={saveNotificationSettings} loading={savingNotifications} />
+            <Button label="Save" onPress={saveHabitReminder} loading={savingReminder} />
           </Card>
 
           <ThemedText type="sectionTitle" style={styles.sectionTitle}>
@@ -311,10 +311,10 @@ const styles = StyleSheet.create({
   sectionTitle: { marginTop: Spacing.two },
   card: { gap: Spacing.three },
   avatarPreview: { alignItems: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  grid: { flexDirection: 'row', gap: Spacing.two },
   avatarCell: {
-    width: 48,
-    height: 48,
+    flex: 1,
+    aspectRatio: 1,
     borderRadius: Radius.pill,
     borderWidth: 3,
     overflow: 'hidden',
