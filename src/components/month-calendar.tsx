@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -30,6 +30,19 @@ export function MonthCalendar({
   const theme = useTheme();
   const initial = selectedDate ? new Date(selectedDate) : new Date();
   const [viewDate, setViewDate] = useState(new Date(initial.getFullYear(), initial.getMonth(), 1));
+
+  // Re-center on selectedDate whenever it changes to a different month (e.g. a
+  // parent screen re-opening this calendar for a newly picked date) — otherwise
+  // viewDate stays stuck on whichever month happened to be showing on first mount.
+  useEffect(() => {
+    if (!selectedDate) return;
+    const d = new Date(selectedDate);
+    setViewDate((prev) =>
+      prev.getFullYear() === d.getFullYear() && prev.getMonth() === d.getMonth()
+        ? prev
+        : new Date(d.getFullYear(), d.getMonth(), 1)
+    );
+  }, [selectedDate]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();

@@ -205,7 +205,7 @@ export default function ProfileScreen() {
           </Card>
 
           <ThemedText type="sectionTitle" style={styles.sectionTitle}>
-            Health
+            Customise
           </ThemedText>
           <Card style={styles.card}>
             <ToggleRow
@@ -236,7 +236,9 @@ export default function ProfileScreen() {
             <ToggleRow
               emoji="🔔"
               title="Habit reminders"
+              titleStyle={{ fontSize: 17 }}
               description="Reminds you (IST) about any habits you haven't completed yet today."
+              descriptionStyle={{ fontWeight: '400' }}
               value={habitReminderEnabled}
               onValueChange={setHabitReminderEnabled}
             />

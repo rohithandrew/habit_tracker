@@ -1,4 +1,4 @@
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, Switch, View, type TextStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
@@ -7,7 +7,9 @@ import { useTheme } from '@/hooks/use-theme';
 export type ToggleRowProps = {
   emoji?: string;
   title: string;
+  titleStyle?: TextStyle;
   description?: string;
+  descriptionStyle?: TextStyle;
   /** Short pill label next to the title, e.g. "Coming soon". */
   badge?: string;
   disabled?: boolean;
@@ -19,7 +21,9 @@ export type ToggleRowProps = {
 export function ToggleRow({
   emoji,
   title,
+  titleStyle,
   description,
+  descriptionStyle,
   badge,
   disabled,
   value,
@@ -31,7 +35,9 @@ export function ToggleRow({
       {emoji ? <ThemedText style={styles.emoji}>{emoji}</ThemedText> : null}
       <View style={styles.text}>
         <View style={styles.titleRow}>
-          <ThemedText type="smallBold">{title}</ThemedText>
+          <ThemedText type="smallBold" style={titleStyle}>
+            {title}
+          </ThemedText>
           {badge ? (
             <View style={[styles.badge, { backgroundColor: theme.backgroundSelected }]}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.badgeText}>
@@ -41,7 +47,7 @@ export function ToggleRow({
           ) : null}
         </View>
         {description ? (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="small" themeColor="textSecondary" style={descriptionStyle}>
             {description}
           </ThemedText>
         ) : null}

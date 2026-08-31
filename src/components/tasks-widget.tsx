@@ -10,13 +10,72 @@ import type { Task } from '@/lib/types';
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function TasksWidget({ tasks }: { tasks: Task[] }) {
+export function TasksWidget({
+  tasks,
+  variant = 'home',
+}: {
+  tasks: Task[];
+  /** 'home': compact week strip + 2-task preview, tap through to see the rest.
+   * 'month': browse a month at a time, listing every task due in it. */
+  variant?: 'home' | 'month';
+}) {
   const theme = useTheme();
   const todayKey = toDateKey(new Date());
   const weekDates = getWeekDates(new Date());
 
   function firstTaskColorFor(dateKey: string): string | undefined {
     return tasks.find((t) => t.date === dateKey)?.color;
+  }
+
+  function taskDateLabel(t: Task): string {
+    return fromDateKey(t.date).toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  if (variant === 'month') {
+    const now = new Date();
+    const monthLabel = now.toLocaleDateString(undefined, { month: 'long' });
+
+    const monthStart = toDateKey(new Date(now.getFullYear(), now.getMonth(), 1));
+    const monthEnd = toDateKey(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    const monthTasks = tasks
+      .filter((t) => t.date >= monthStart && t.date <= monthEnd)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return (
+      <Pressable onPress={() => router.push('/tasks/all')}>
+        <Card style={styles.card}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              {monthLabel}
+            </ThemedText>
+            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.arrow}>
+              ›
+            </ThemedText>
+          </View>
+
+          {monthTasks.length > 0 ? (
+            <View style={styles.upcoming}>
+              {monthTasks.slice(0, 2).map((t) => (
+                <View key={t.id} style={[styles.taskRow, { backgroundColor: `${t.color}26` }]}>
+                  <ThemedText style={{ flex: 1 }} numberOfLines={1}>
+                    {t.text}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {taskDateLabel(t)}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <ThemedText themeColor="textSecondary">No tasks this month.</ThemedText>
+          )}
+        </Card>
+      </Pressable>
+    );
   }
 
   return (
@@ -56,17 +115,15 @@ export function TasksWidget({ tasks }: { tasks: Task[] }) {
 
         {tasks.length > 0 ? (
           <View style={styles.upcoming}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.upcomingLabel}>
-              Upcoming
-            </ThemedText>
-            {tasks.slice(0, 3).map((t) => (
-              <View key={t.id} style={styles.taskRow}>
-                <View style={[styles.taskBar, { backgroundColor: t.color }]} />
+            {tasks.slice(0, 2).map((t) => (
+              // Alpha suffix on the task's own color for a light tinted row,
+              // matching the reference image's pastel event backgrounds.
+              <View key={t.id} style={[styles.taskRow, { backgroundColor: `${t.color}26` }]}>
                 <ThemedText style={{ flex: 1 }} numberOfLines={1}>
                   {t.text}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {fromDateKey(t.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+                  {taskDateLabel(t)}
                 </ThemedText>
               </View>
             ))}
@@ -95,8 +152,13 @@ const styles = StyleSheet.create({
   },
   dayNumber: { fontSize: 14, textAlign: 'center', includeFontPadding: false, textAlignVertical: 'center' },
   dot: { width: 15, height: 4, borderRadius: Radius.pill },
-  upcoming: { gap: Spacing.three },
-  upcomingLabel: { fontSize: 16 },
-  taskRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  taskBar: { width: 4, height: 16, borderRadius: 2 },
+  upcoming: { gap: Spacing.two },
+  taskRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 13,
+    borderRadius: Radius.md,
+  },
 });

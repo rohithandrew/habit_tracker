@@ -13,8 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
-import { toDateKey } from '@/lib/habits';
-import { fetchUpcomingTasks } from '@/lib/tasks-api';
+import { fetchAllTasks } from '@/lib/tasks-api';
 import { createTodo, deleteTodo, fetchTodos, toggleTodo } from '@/lib/todos-api';
 import type { Task, Todo } from '@/lib/types';
 
@@ -34,7 +33,7 @@ export default function TodoScreen() {
     setLoading(true);
     try {
       const [fetchedTasks, fetchedTodos] = await Promise.all([
-        fetchUpcomingTasks(session.user.id, toDateKey(new Date())),
+        fetchAllTasks(session.user.id),
         fetchTodos(session.user.id),
       ]);
       setTasks(fetchedTasks);
@@ -122,7 +121,7 @@ export default function TodoScreen() {
             Todo
           </ThemedText>
 
-          <TasksWidget tasks={tasks} />
+          <TasksWidget tasks={tasks} variant="month" />
 
           <ThemedText type="sectionTitle" style={styles.sectionSpacing}>
             My tasks
