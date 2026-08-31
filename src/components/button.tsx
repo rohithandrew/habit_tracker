@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View, type PressableProps } from 'react-native';
+import { Pressable, StyleSheet, View, type PressableProps, type ViewStyle } from 'react-native';
 
 import { DotsLoader } from '@/components/dots-loader';
 import { ThemedText } from '@/components/themed-text';
@@ -14,6 +14,7 @@ export type ButtonProps = Omit<PressableProps, 'style'> & {
   icon?: keyof typeof Ionicons.glyphMap;
   loading?: boolean;
   fullWidth?: boolean;
+  style?: ViewStyle;
 };
 
 export function Button({
@@ -23,6 +24,7 @@ export function Button({
   loading = false,
   fullWidth = true,
   disabled,
+  style,
   ...rest
 }: ButtonProps) {
   const theme = useTheme();
@@ -48,6 +50,7 @@ export function Button({
         { backgroundColor, opacity: isDisabled ? 0.6 : pressed ? 0.85 : 1 },
         fullWidth && styles.fullWidth,
         variant === 'ghost' && { borderWidth: 1, borderColor: theme.border },
+        style,
       ]}
       {...rest}>
       {loading ? (

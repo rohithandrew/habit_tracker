@@ -89,7 +89,7 @@ export async function syncHabitsReminder(time: string | null, allDoneToday: bool
     identifier: HABITS_REMINDER_ID,
     content: {
       title: 'Habit reminder',
-      body: "You still have habits to complete today — don't break the streak!",
+      body: "You still have habits to complete today, don't break the streak!",
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,

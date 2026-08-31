@@ -1,5 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Share } from 'react-native';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,17 +15,17 @@ import { TimePicker } from '@/components/time-picker';
 import { ToggleRow } from '@/components/toggle-row';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { deleteAccountData, exportUserData } from '@/lib/account';
+import { deleteAccountData } from '@/lib/account';
 import { useAuth } from '@/lib/auth-context';
 import { AVATAR_KEYS, DEFAULT_AVATAR_KEY, avatarSource } from '@/lib/avatars';
 import { requestNotificationPermission, syncHabitsReminder } from '@/lib/notifications';
 import { useSettings, type ThemeMode } from '@/lib/settings-context';
 import { supabase } from '@/lib/supabase';
 
-const THEME_OPTIONS: { mode: ThemeMode; label: string }[] = [
-  { mode: 'system', label: 'System' },
-  { mode: 'light', label: 'Light' },
-  { mode: 'dark', label: 'Dark' },
+const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { mode: 'system', label: 'System', icon: 'phone-portrait-outline' },
+  { mode: 'light', label: 'Light', icon: 'sunny-outline' },
+  { mode: 'dark', label: 'Dark', icon: 'moon-outline' },
 ];
 
 const AVATARS_PER_ROW = 5;
@@ -36,7 +36,7 @@ const AVATAR_ROWS = Array.from({ length: Math.ceil(AVATAR_KEYS.length / AVATARS_
 export default function ProfileScreen() {
   const theme = useTheme();
   const { profile, session, refreshProfile, signOut } = useAuth();
-  const { themeMode, setThemeMode, colorBlindPalette, setColorBlindPalette } = useSettings();
+  const { themeMode, setThemeMode } = useSettings();
 
   const [displayName, setDisplayName] = useState(profile?.display_name ?? '');
   const [avatarKey, setAvatarKey] = useState(profile?.avatar_emoji ?? DEFAULT_AVATAR_KEY);
@@ -50,7 +50,6 @@ export default function ProfileScreen() {
   const [habitReminderTime, setHabitReminderTime] = useState(profile?.habit_reminder_time?.slice(0, 5) ?? '20:00');
   const [savingReminder, setSavingReminder] = useState(false);
 
-  const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   if (!session) return null;
@@ -121,18 +120,6 @@ export default function ProfileScreen() {
       Alert.alert('Could not save', err instanceof Error ? err.message : String(err));
     } finally {
       setSavingReminder(false);
-    }
-  }
-
-  async function handleExport() {
-    setExporting(true);
-    try {
-      const data = await exportUserData(session!.user.id);
-      await Share.share({ message: JSON.stringify(data, null, 2), title: 'My Habit Tracker data' });
-    } catch (err) {
-      Alert.alert('Could not export', err instanceof Error ? err.message : String(err));
-    } finally {
-      setExporting(false);
     }
   }
 
@@ -237,7 +224,7 @@ export default function ProfileScreen() {
               emoji="🔔"
               title="Habit reminders"
               titleStyle={{ fontSize: 17 }}
-              description="Reminds you (IST) about any habits you haven't completed yet today."
+              description="Reminds you about any habits you haven't completed yet today."
               descriptionStyle={{ fontWeight: '400' }}
               value={habitReminderEnabled}
               onValueChange={setHabitReminderEnabled}
@@ -261,6 +248,11 @@ export default function ProfileScreen() {
                     styles.segment,
                     { backgroundColor: themeMode === opt.mode ? theme.primary : theme.backgroundSelected },
                   ]}>
+                  <Ionicons
+                    name={opt.icon}
+                    size={16}
+                    color={themeMode === opt.mode ? theme.onPrimary : theme.text}
+                  />
                   <ThemedText
                     type="small"
                     style={themeMode === opt.mode ? { color: theme.onPrimary } : undefined}>
@@ -269,28 +261,22 @@ export default function ProfileScreen() {
                 </Pressable>
               ))}
             </View>
-            <ToggleRow
-              emoji="🎨"
-              title="Color-blind-safe contribution grid"
-              description="Uses a blue/orange scale instead of purple intensity."
-              value={colorBlindPalette}
-              onValueChange={setColorBlindPalette}
+          </Card>
+
+          <View style={{ gap: Spacing.two }}>
+            <Button
+              label="Delete all my data"
+              variant="danger"
+              loading={deleting}
+              onPress={confirmDeleteAccount}
             />
-          </Card>
-
-          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
-            Your data
-          </ThemedText>
-          <Card style={styles.card}>
-            <Button label="Export my data" variant="secondary" loading={exporting} onPress={handleExport} />
-            <Pressable onPress={confirmDeleteAccount} style={styles.deleteButton} disabled={deleting}>
-              <ThemedText themeColor="danger" type="smallBold">
-                {deleting ? 'Deleting…' : 'Delete all my data'}
-              </ThemedText>
-            </Pressable>
-          </Card>
-
-          <Button label="Sign out" variant="ghost" onPress={signOut} />
+            <Button
+              label="Sign out"
+              variant="ghost"
+              onPress={signOut}
+              style={{ borderWidth: 2, borderColor: theme.textSecondary }}
+            />
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -323,6 +309,13 @@ const styles = StyleSheet.create({
   },
   avatarImage: { width: '100%', height: '100%' },
   segmented: { flexDirection: 'row', gap: Spacing.two },
-  segment: { flex: 1, alignItems: 'center', paddingVertical: Spacing.two, borderRadius: Radius.md },
-  deleteButton: { alignItems: 'center', paddingVertical: Spacing.two },
+  segment: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.md,
+  },
 });

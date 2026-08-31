@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.two },
   disabled: { opacity: 0.5 },
   emoji: { fontSize: 24 },
-  text: { flex: 1, gap: 2 },
+  text: { flex: 1, gap: 5 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   badge: { paddingHorizontal: Spacing.two, paddingVertical: 2, borderRadius: Radius.pill },
   badgeText: { fontSize: 11 },

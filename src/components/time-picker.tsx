@@ -26,6 +26,9 @@ export function TimePicker({ value, onChange }: TimePickerProps) {
   function setMinute(m: number) {
     onChange(`${pad(hour)}:${pad(((m % 60) + 60) % 60)}`);
   }
+  function togglePeriod() {
+    onChange(`${pad(hour < 12 ? hour + 12 : hour - 12)}:${pad(minute)}`);
+  }
 
   const period = hour < 12 ? 'AM' : 'PM';
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
@@ -37,9 +40,11 @@ export function TimePicker({ value, onChange }: TimePickerProps) {
         :
       </ThemedText>
       <TimeStepper label="Min" value={pad(minute)} onIncrement={() => setMinute(minute + 5)} onDecrement={() => setMinute(minute - 5)} />
-      <View style={[styles.periodBadge, { backgroundColor: theme.backgroundSelected }]}>
+      <Pressable
+        onPress={togglePeriod}
+        style={[styles.periodBadge, { backgroundColor: theme.backgroundSelected }]}>
         <ThemedText type="smallBold">{period}</ThemedText>
-      </View>
+      </Pressable>
     </View>
   );
 }
