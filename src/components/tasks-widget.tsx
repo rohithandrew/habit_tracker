@@ -13,15 +13,19 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export function TasksWidget({
   tasks,
   variant = 'home',
+  readOnly,
 }: {
   tasks: Task[];
   /** 'home': compact week strip + 2-task preview, tap through to see the rest.
    * 'month': browse a month at a time, listing every task due in it. */
   variant?: 'home' | 'month';
+  /** Disables the tap-through to /tasks/all, e.g. when viewing a friend's tasks. */
+  readOnly?: boolean;
 }) {
   const theme = useTheme();
   const todayKey = toDateKey(new Date());
   const weekDates = getWeekDates(new Date());
+  const onPress = readOnly ? undefined : () => router.push('/tasks/all');
 
   function firstTaskColorFor(dateKey: string): string | undefined {
     return tasks.find((t) => t.date === dateKey)?.color;
@@ -46,15 +50,17 @@ export function TasksWidget({
       .sort((a, b) => a.date.localeCompare(b.date));
 
     return (
-      <Pressable onPress={() => router.push('/tasks/all')}>
+      <Pressable disabled={readOnly} onPress={onPress}>
         <Card style={styles.card}>
           <View style={styles.sectionHeader}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               {monthLabel}
             </ThemedText>
-            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.arrow}>
-              ›
-            </ThemedText>
+            {!readOnly ? (
+              <ThemedText type="smallBold" themeColor="textSecondary" style={styles.arrow}>
+                ›
+              </ThemedText>
+            ) : null}
           </View>
 
           {monthTasks.length > 0 ? (
@@ -79,15 +85,17 @@ export function TasksWidget({
   }
 
   return (
-    <Pressable onPress={() => router.push('/tasks/all')}>
+    <Pressable disabled={readOnly} onPress={onPress}>
       <Card style={styles.card}>
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>
             Tasks
           </ThemedText>
-          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.arrow}>
-            ›
-          </ThemedText>
+          {!readOnly ? (
+            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.arrow}>
+              ›
+            </ThemedText>
+          ) : null}
         </View>
 
         <View style={styles.weekRow}>

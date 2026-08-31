@@ -71,7 +71,7 @@ export async function fetchPermissionFor(ownerId: string, friendId: string): Pro
 export async function updatePermission(
   ownerId: string,
   friendId: string,
-  patch: Partial<Pick<FriendPermission, 'can_view_habits' | 'can_view_timer' | 'can_view_mood' | 'can_comment'>>
+  patch: Partial<Pick<FriendPermission, 'can_view_habits' | 'can_view_timer' | 'can_view_todo' | 'can_view_mood'>>
 ): Promise<void> {
   const { error } = await supabase
     .from('friend_permissions')

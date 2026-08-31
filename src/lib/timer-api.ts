@@ -48,14 +48,3 @@ export async function stopSession(sessionId: string, startedAt: string): Promise
   if (error) throw error;
   return data as TimerSession;
 }
-
-export async function fetchFriendActiveSession(ownerId: string): Promise<TimerSession | null> {
-  const { data, error } = await supabase
-    .from('timer_sessions')
-    .select('*')
-    .eq('user_id', ownerId)
-    .eq('is_active', true)
-    .maybeSingle();
-  if (error) throw error;
-  return data as TimerSession | null;
-}

@@ -1,200 +1,18 @@
-import { router, useNavigation } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
-import { Card } from '@/components/card';
-import { DotsLoader } from '@/components/dots-loader';
-import { HabitFormModal } from '@/components/habit-form-modal';
-import type { HabitFormValues } from '@/components/habit-form';
-import { StickyNotesCanvas } from '@/components/sticky-notes-canvas';
-import { TasksWidget } from '@/components/tasks-widget';
+import { HomeView } from '@/components/screens/home-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WeeklyHabitRow } from '@/components/weekly-habit-row';
-import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { isDateEligible, isHabitEffectivelyArchived, isPastSchedule, toDateKey } from '@/lib/habits';
-import {
-  createHabit,
-  fetchHabitLogs,
-  fetchHabits,
-  setHabitArchived,
-  toggleHabitLog,
-} from '@/lib/habits-api';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth-context';
-import { fetchFriendships, fetchProfilesByIds } from '@/lib/friends-api';
-import { syncHabitReminder, syncHabitsReminder } from '@/lib/notifications';
-import { fetchStickyNotes, markStickyNoteRead } from '@/lib/sticky-notes-api';
-import { computeCurrentStreak, reachedMilestone } from '@/lib/streaks';
-import { fetchUpcomingTasks } from '@/lib/tasks-api';
-import type { Habit, HabitLog, PublicProfile, StickyNote, Task } from '@/lib/types';
-
-const CONTRIBUTION_HISTORY_DAYS = 14 * 7;
-
-/** Whether every active, today-eligible habit already has a 'done' log for today. */
-function computeAllDoneToday(habitsList: Habit[], logsList: HabitLog[]): boolean {
-  const now = new Date();
-  const todayKey = toDateKey(now);
-  const activeToday = habitsList.filter(
-    (h) => !isHabitEffectivelyArchived(h) && isDateEligible(h.schedule_data, now)
-  );
-  if (activeToday.length === 0) return true;
-  const doneIds = new Set(
-    logsList.filter((l) => l.date === todayKey && l.status === 'done').map((l) => l.habit_id)
-  );
-  return activeToday.every((h) => doneIds.has(h.id));
-}
 
 export default function HomeScreen() {
-  const theme = useTheme();
-  const navigation = useNavigation();
   const { session, profile } = useAuth();
 
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [logs, setLogs] = useState<HabitLog[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
-  const [friendProfiles, setFriendProfiles] = useState<PublicProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [endedExpanded, setEndedExpanded] = useState(false);
-
-  const load = useCallback(
-    async (isRefresh = false) => {
-      if (!session) return;
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
-
-      try {
-        const since = new Date();
-        since.setDate(since.getDate() - CONTRIBUTION_HISTORY_DAYS);
-        const [fetchedHabits, fetchedLogs, fetchedTasks, notes, friendships] = await Promise.all([
-          fetchHabits(session.user.id),
-          fetchHabitLogs(session.user.id, since),
-          fetchUpcomingTasks(session.user.id, toDateKey(new Date())),
-          fetchStickyNotes(session.user.id, 'habit_grid'),
-          fetchFriendships(session.user.id),
-        ]);
-
-        const toArchive = fetchedHabits.filter((h) => !h.archived && isPastSchedule(h.schedule_data));
-        if (toArchive.length > 0) {
-          await Promise.all(toArchive.map((h) => setHabitArchived(h.id, true)));
-          for (const h of toArchive) h.archived = true;
-        }
-
-        setHabits(fetchedHabits);
-        setLogs(fetchedLogs);
-        setTasks(fetchedTasks);
-        setStickyNotes(notes);
-
-        syncHabitsReminder(
-          profile?.habit_reminder_time ?? null,
-          computeAllDoneToday(fetchedHabits, fetchedLogs)
-        ).catch(() => {
-          // best-effort; a failed reschedule isn't worth surfacing to the user
-        });
-
-        // Mark this visit's unread notes read so their author's avatar stops showing
-        // in the strip starting next visit — the note text is already visible on the
-        // pin itself, so seeing it here counts as having read it.
-        const unread = notes.filter((n) => n.author_id !== session.user.id && !n.read);
-        if (unread.length > 0) {
-          Promise.all(unread.map((n) => markStickyNoteRead(n.id))).catch(() => {
-            // best-effort; a failed read-marking isn't worth surfacing to the user
-          });
-        }
-
-        const acceptedIds = friendships
-          .filter((f) => f.status === 'accepted')
-          .map((f) => (f.requester_id === session.user.id ? f.addressee_id : f.requester_id));
-        setFriendProfiles(acceptedIds.length > 0 ? await fetchProfilesByIds(acceptedIds) : []);
-      } catch (err) {
-        console.error(err);
-        Alert.alert('Could not load your habits', err instanceof Error ? err.message : String(err));
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [session, profile?.habit_reminder_time]
-  );
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => load());
-    return unsubscribe;
-  }, [navigation, load]);
-
-  async function handleToggleDay(habit: Habit, dateKey: string, currentlyDone: boolean) {
-    if (!session) return;
-    const previousLogs = logs;
-    const newLogs = currentlyDone
-      ? logs.filter((l) => !(l.habit_id === habit.id && l.date === dateKey))
-      : [
-          ...logs,
-          {
-            id: `optimistic-${habit.id}-${dateKey}`,
-            habit_id: habit.id,
-            user_id: session.user.id,
-            date: dateKey,
-            status: 'done' as const,
-            completed_at: new Date().toISOString(),
-          },
-        ];
-    setLogs(newLogs);
-
-    try {
-      await toggleHabitLog(session.user.id, habit.id, dateKey, currentlyDone);
-      if (dateKey === toDateKey(new Date())) {
-        syncHabitsReminder(
-          profile?.habit_reminder_time ?? null,
-          computeAllDoneToday(habits, newLogs)
-        ).catch(() => {
-          // best-effort; a failed reschedule isn't worth surfacing to the user
-        });
-      }
-      if (!currentlyDone && dateKey === toDateKey(new Date())) {
-        const streak = computeCurrentStreak(habit, newLogs);
-        const milestone = reachedMilestone(streak);
-        if (milestone) {
-          Alert.alert(`${milestone}-day streak! 🔥`, `"${habit.title}" — ${milestone} days in a row.`);
-        }
-      }
-    } catch (err) {
-      setLogs(previousLogs);
-      Alert.alert('Could not update', err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  async function handleCreateHabit(values: HabitFormValues) {
-    if (!session) return;
-    setCreating(true);
-    try {
-      const habit = await createHabit(session.user.id, values);
-      await syncHabitReminder(habit);
-      setHabits((prev) => [...prev, habit]);
-      setShowAddModal(false);
-    } catch (err) {
-      Alert.alert('Could not create habit', err instanceof Error ? err.message : String(err));
-    } finally {
-      setCreating(false);
-    }
-  }
-
   if (!session) return null;
-
-  const activeHabits = habits.filter((h) => !isHabitEffectivelyArchived(h));
-  const endedHabits = habits.filter((h) => isHabitEffectivelyArchived(h));
-
-  const friendIdsWithUnreadNotes = new Set(stickyNotes.filter((n) => !n.read).map((n) => n.author_id));
-  const friendsWithUnreadNotes = friendProfiles.filter((f) => friendIdsWithUnreadNotes.has(f.id));
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
@@ -205,119 +23,25 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}>
-          <View style={styles.header}>
-            <View style={{ flexShrink: 1, gap: Spacing.one }}>
-              <ThemedText type="title" style={styles.headerTitle}>
-                {greeting}, {firstName}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.dateLabel}>
-                {dateLabel}
-              </ThemedText>
-            </View>
-            <Pressable onPress={() => router.push('/(tabs)/profile')}>
-              <Avatar avatarKey={profile?.avatar_emoji} size={52} />
-            </Pressable>
-          </View>
-
-          <View style={styles.tasksWidgetWrap}>
-            <TasksWidget tasks={tasks} />
-          </View>
-
-          {friendsWithUnreadNotes.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.friendStrip}
-              contentContainerStyle={styles.friendStripContent}>
-              {friendsWithUnreadNotes.map((f) => (
-                <Pressable key={f.id} onPress={() => router.push(`/friend/${f.id}`)} style={styles.friendAvatar}>
-                  <Avatar avatarKey={f.avatar_emoji} size={44} />
-                  <View style={[styles.friendDot, { backgroundColor: theme.danger, borderColor: theme.background }]} />
-                </Pressable>
-              ))}
-            </ScrollView>
-          ) : null}
-
-          <View style={styles.sectionHeader}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>
-              Weekly Habits
-            </ThemedText>
-            <Pressable onPress={() => setShowAddModal(true)} hitSlop={8} style={{ marginRight: Spacing.two }}>
-              <ThemedText type="small" themeColor="accent">
-                + Add habit
-              </ThemedText>
-            </Pressable>
-          </View>
-
-          <StickyNotesCanvas
-            notes={stickyNotes}
-            currentUserId={session.user.id}
-            ownerId={session.user.id}
-            targetType="habit_grid"
-            canAuthorNote={false}
-            onNotesChange={setStickyNotes}>
-            {loading ? (
-              <DotsLoader />
-            ) : activeHabits.length === 0 ? (
-              <View style={styles.emptyState}>
-                <ThemedText themeColor="textSecondary">
-                  No habits yet. Tap "+ Add habit" to create your first one.
+        <HomeView
+          userId={session.user.id}
+          headerSlot={
+            <View style={styles.header}>
+              <View style={{ flexShrink: 1, gap: Spacing.one }}>
+                <ThemedText type="title" style={styles.headerTitle}>
+                  {greeting}, {firstName}
+                </ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.dateLabel}>
+                  {dateLabel}
                 </ThemedText>
               </View>
-            ) : (
-              <View style={{ gap: Spacing.two }}>
-                {activeHabits.map((habit) => (
-                  <WeeklyHabitRow
-                    key={habit.id}
-                    habit={habit}
-                    logs={logs}
-                    onToggleDay={(dateKey, done) => handleToggleDay(habit, dateKey, done)}
-                  />
-                ))}
-              </View>
-            )}
-          </StickyNotesCanvas>
-
-          {endedHabits.length > 0 ? (
-            <Card>
-              <Pressable
-                style={styles.endedHeader}
-                onPress={() => setEndedExpanded((v) => !v)}>
-                <ThemedText type="sectionTitle">
-                  Ended ({endedHabits.length})
-                </ThemedText>
-                <ThemedText themeColor="textSecondary">{endedExpanded ? '▲' : '▼'}</ThemedText>
+              <Pressable onPress={() => router.push('/(tabs)/profile')}>
+                <Avatar avatarKey={profile?.avatar_emoji} size={52} />
               </Pressable>
-              {endedExpanded
-                ? endedHabits.map((habit) => (
-                    <Pressable
-                      key={habit.id}
-                      style={styles.endedRow}
-                      onPress={() => router.push(`/habit/${habit.id}`)}>
-                      <ThemedText>{habit.emoji}</ThemedText>
-                      <ThemedText themeColor="textSecondary" style={{ flex: 1 }}>
-                        {habit.title}
-                      </ThemedText>
-                    </Pressable>
-                  ))
-                : null}
-            </Card>
-          ) : null}
-        </ScrollView>
+            </View>
+          }
+        />
       </SafeAreaView>
-
-      <HabitFormModal
-        visible={showAddModal}
-        title="Add habit"
-        submitLabel="Create habit"
-        submitting={creating}
-        onClose={() => setShowAddModal(false)}
-        onSubmit={handleCreateHabit}
-      />
     </ThemedView>
   );
 }
@@ -331,7 +55,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
-  scroll: { paddingBottom: Spacing.six, paddingTop: Spacing.two, gap: Spacing.three },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -339,32 +62,4 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 26, fontWeight: '700' },
   dateLabel: { fontWeight: '400', fontSize: 15 },
-  tasksWidgetWrap: { marginTop: Spacing.two },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.two,
-  },
-  sectionTitle: { fontSize: 20 },
-  emptyState: { paddingVertical: Spacing.three },
-  friendStrip: { flexGrow: 0 },
-  friendStripContent: { gap: Spacing.three, paddingRight: Spacing.two },
-  friendAvatar: { position: 'relative' },
-  friendDot: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 12,
-    height: 12,
-    borderRadius: Radius.pill,
-    borderWidth: 2,
-  },
-  endedHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  endedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingTop: Spacing.three,
-  },
 });

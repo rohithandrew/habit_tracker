@@ -28,6 +28,9 @@ export const Colors = {
     accent: '#5F7A1E',
     success: '#3E7A4B',
     danger: '#D9534F',
+    /** Solid fill for a destructive button (paired with white text). `danger` itself is tuned
+     * to read as text on the page background, which is too pale to fill a button in dark mode. */
+    dangerSolid: '#D9534F',
   },
   dark: {
     text: '#F1EEDF',
@@ -42,6 +45,7 @@ export const Colors = {
     accent: '#C7EF3E',
     success: '#5FCB98',
     danger: '#FF8A9B',
+    dangerSolid: '#C4314B',
   },
 } as const;
 

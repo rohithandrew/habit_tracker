@@ -70,8 +70,8 @@ export interface FriendPermission {
   friend_id: string;
   can_view_habits: boolean;
   can_view_timer: boolean;
+  can_view_todo: boolean;
   can_view_mood: boolean;
-  can_comment: boolean;
 }
 
 export interface PublicProfile {
@@ -127,22 +127,6 @@ export interface Todo {
   created_at: string;
 }
 
-export type StickyNoteTargetType = 'habit_grid' | 'timer_session' | 'mood_calendar';
-
-export interface StickyNote {
-  id: string;
-  author_id: string;
-  owner_id: string;
-  target_type: StickyNoteTargetType;
-  target_id: string | null;
-  position_x: number;
-  position_y: number;
-  color: string;
-  text: string;
-  read: boolean;
-  created_at: string;
-}
-
 export const MOOD_LABELS: Record<1 | 2 | 3 | 4 | 5, string> = {
   1: 'Rough',
   2: 'Low',
@@ -166,8 +150,6 @@ export const MOOD_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
   4: '#7ED6A5',
   5: '#4CAF82',
 };
-
-export const STICKY_NOTE_COLORS = ['#FFE58A', '#FFB8C6', '#B8E0FF', '#C9F2C9', '#E0C9FF'] as const;
 
 export const HABIT_COLORS = [
   '#7C9DFF',

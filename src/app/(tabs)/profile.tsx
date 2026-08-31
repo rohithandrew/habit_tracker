@@ -126,7 +126,7 @@ export default function ProfileScreen() {
   function confirmDeleteAccount() {
     Alert.alert(
       'Delete all your data?',
-      'This permanently deletes your habits, logs, timer sessions, mood entries, period logs, friendships, and sticky notes. This cannot be undone.',
+      'This permanently deletes your habits, logs, timer sessions, mood entries, period logs, and friendships. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

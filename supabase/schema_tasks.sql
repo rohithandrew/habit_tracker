@@ -19,4 +19,4 @@ alter table public.tasks enable row level security;
 
 drop policy if exists "Users manage their own tasks" on public.tasks;
 create policy "Users manage their own tasks" on public.tasks
-  for all using (au th.uid() = user_id) with check (auth.uid() = user_id);
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

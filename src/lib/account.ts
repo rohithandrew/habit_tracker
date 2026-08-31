@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 /**
  * Deletes the profiles row, which cascades (via FK) to every table that
  * references it: habits, habit_logs, period_logs, timer_sessions,
- * mood_entries, friendships, friend_permissions, sticky_notes, tasks, todos.
+ * mood_entries, friendships, friend_permissions, tasks, todos.
  * The underlying auth.users row (email/login) is untouched — deleting that
  * requires the service-role admin API, which only a backend can hold. If the
  * user signs back in, AuthProvider treats the missing profile as a fresh

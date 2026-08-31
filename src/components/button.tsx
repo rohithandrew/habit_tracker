@@ -34,7 +34,7 @@ export function Button({
     variant === 'primary'
       ? theme.primary
       : variant === 'danger'
-        ? theme.danger
+        ? theme.dangerSolid
         : variant === 'secondary'
           ? theme.backgroundSelected
           : 'transparent';

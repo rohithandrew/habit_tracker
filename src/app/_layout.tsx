@@ -66,6 +66,10 @@ function RootNavigator() {
         options={{ headerShown: true, headerBackTitle: 'Back', title: 'Friend' }}
       />
       <Stack.Screen
+        name="friend/[id]/settings"
+        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Sharing settings' }}
+      />
+      <Stack.Screen
         name="timer/history"
         options={{ headerShown: true, headerBackTitle: 'Back', title: 'Focus history' }}
       />

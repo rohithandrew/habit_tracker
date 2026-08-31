@@ -1,80 +1,59 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
-import { ContributionGrid, ContributionLegend } from '@/components/contribution-grid';
 import { DotsLoader } from '@/components/dots-loader';
-import { MoodHistoryStrip } from '@/components/mood-history-strip';
-import { StickyNotesCanvas } from '@/components/sticky-notes-canvas';
+import { HomeView } from '@/components/screens/home-view';
+import { MoodView } from '@/components/screens/mood-view';
+import { TimerView } from '@/components/screens/timer-view';
+import { TodoView } from '@/components/screens/todo-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { ToggleRow } from '@/components/toggle-row';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
-import {
-  blockUser,
-  fetchPermissionFor,
-  fetchProfilesByIds,
-  unfriend,
-  updatePermission,
-} from '@/lib/friends-api';
-import { fromDateKey } from '@/lib/habits';
-import { fetchHabitLogs } from '@/lib/habits-api';
-import { fetchFriendMoodHistory } from '@/lib/mood-api';
-import { fetchStickyNotes } from '@/lib/sticky-notes-api';
-import { fetchFriendActiveSession } from '@/lib/timer-api';
-import type { FriendPermission, HabitLog, MoodEntry, PublicProfile, StickyNote, TimerSession } from '@/lib/types';
+import { fetchPermissionFor, fetchProfilesByIds } from '@/lib/friends-api';
+import type { FriendPermission, PublicProfile } from '@/lib/types';
+
+type PageKey = 'home' | 'timer' | 'todo' | 'mood';
+
+const PAGES: {
+  key: PageKey;
+  label: string;
+  permission: keyof Pick<FriendPermission, 'can_view_habits' | 'can_view_timer' | 'can_view_todo' | 'can_view_mood'>;
+}[] = [
+  { key: 'home', label: 'Home', permission: 'can_view_habits' },
+  { key: 'timer', label: 'Timer', permission: 'can_view_timer' },
+  { key: 'todo', label: 'Todo', permission: 'can_view_todo' },
+  { key: 'mood', label: 'Mood', permission: 'can_view_mood' },
+];
 
 export default function FriendDetailScreen() {
+  const theme = useTheme();
   const navigation = useNavigation();
   const { session } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [friendProfile, setFriendProfile] = useState<PublicProfile | null>(null);
-  const [grantedByMe, setGrantedByMe] = useState<FriendPermission | null>(null);
   const [grantedToMe, setGrantedToMe] = useState<FriendPermission | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
-  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
-  const [activeSession, setActiveSession] = useState<TimerSession | null>(null);
-  const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
-  const [selectedMoodDate, setSelectedMoodDate] = useState<string | null>(null);
+  const [activePage, setActivePage] = useState<PageKey | null>(null);
 
   const load = useCallback(async () => {
     if (!session || !id) return;
     setLoading(true);
     try {
-      const [profiles, myGrant, theirGrant] = await Promise.all([
+      const [profiles, theirGrant] = await Promise.all([
         fetchProfilesByIds([id]),
-        fetchPermissionFor(session.user.id, id),
         fetchPermissionFor(id, session.user.id),
       ]);
       setFriendProfile(profiles[0] ?? null);
-      setGrantedByMe(myGrant);
       setGrantedToMe(theirGrant);
       navigation.setOptions({ title: profiles[0]?.display_name ?? 'Friend' });
-
-      const since = new Date();
-      since.setDate(since.getDate() - 14 * 7);
-
-      if (theirGrant?.can_view_habits) {
-        const [logs, notes] = await Promise.all([
-          fetchHabitLogs(id, since),
-          fetchStickyNotes(id, 'habit_grid'),
-        ]);
-        setHabitLogs(logs);
-        setStickyNotes(notes);
-      }
-      if (theirGrant?.can_view_timer) {
-        setActiveSession(await fetchFriendActiveSession(id));
-      }
-      if (theirGrant?.can_view_mood) {
-        setMoodHistory(await fetchFriendMoodHistory(id, since));
-      }
     } catch (err) {
       Alert.alert('Could not load', err instanceof Error ? err.message : String(err));
     } finally {
@@ -86,64 +65,15 @@ export default function FriendDetailScreen() {
     load();
   }, [load]);
 
-  async function togglePermission(
-    key: keyof Pick<FriendPermission, 'can_view_habits' | 'can_view_timer' | 'can_view_mood' | 'can_comment'>,
-    value: boolean
-  ) {
-    if (!session || !id || !grantedByMe) return;
-    const previous = grantedByMe;
-    setGrantedByMe({ ...grantedByMe, [key]: value });
-    try {
-      await updatePermission(session.user.id, id, { [key]: value });
-    } catch (err) {
-      setGrantedByMe(previous);
-      Alert.alert('Could not update', err instanceof Error ? err.message : String(err));
-    }
-  }
+  useEffect(() => {
+    if (!grantedToMe) return;
+    setActivePage((prev) => {
+      if (prev && grantedToMe[PAGES.find((p) => p.key === prev)!.permission]) return prev;
+      return PAGES.find((p) => grantedToMe[p.permission])?.key ?? null;
+    });
+  }, [grantedToMe]);
 
-  function confirmUnfriend() {
-    if (!id) return;
-    Alert.alert('Unfriend?', `You'll stop sharing data with ${friendProfile?.display_name ?? 'this person'}.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Unfriend',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await unfriend(id);
-            router.back();
-          } catch (err) {
-            Alert.alert('Could not unfriend', err instanceof Error ? err.message : String(err));
-          }
-        },
-      },
-    ]);
-  }
-
-  function confirmBlock() {
-    if (!id) return;
-    Alert.alert(
-      'Block this person?',
-      'They will no longer be able to send you friend requests, and your data will no longer be shared with them.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Block',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await blockUser(id);
-              router.back();
-            } catch (err) {
-              Alert.alert('Could not block', err instanceof Error ? err.message : String(err));
-            }
-          },
-        },
-      ]
-    );
-  }
-
-  if (loading || !grantedByMe || !friendProfile || !session) {
+  if (loading || !friendProfile || !session || !id) {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={[styles.safeArea, styles.centered]}>
@@ -153,141 +83,58 @@ export default function FriendDetailScreen() {
     );
   }
 
-  const sharesAnything = grantedToMe?.can_view_habits || grantedToMe?.can_view_timer || grantedToMe?.can_view_mood;
+  const visiblePages = PAGES.filter((p) => grantedToMe?.[p.permission]);
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerRow}>
-            <Avatar avatarKey={friendProfile.avatar_emoji} size={56} />
-            <View>
-              <ThemedText type="subtitle" style={styles.title}>
-                {friendProfile.display_name}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary">@{friendProfile.username}</ThemedText>
-            </View>
+        <View style={styles.headerRow}>
+          <Avatar avatarKey={friendProfile.avatar_emoji} size={48} />
+          <View style={{ flex: 1 }}>
+            <ThemedText type="subtitle" style={styles.title}>
+              {friendProfile.display_name}
+            </ThemedText>
+            <ThemedText themeColor="textSecondary">@{friendProfile.username}</ThemedText>
           </View>
+          <Pressable onPress={() => router.push(`/friend/${id}/settings`)} hitSlop={8}>
+            <Ionicons name="ellipsis-horizontal" size={22} color={theme.text} />
+          </Pressable>
+        </View>
 
-          {grantedToMe?.can_view_habits ? (
-            <Card style={styles.card}>
-              <ThemedText type="sectionTitle">Activity</ThemedText>
-              <StickyNotesCanvas
-                notes={stickyNotes}
-                currentUserId={session.user.id}
-                ownerId={id}
-                targetType="habit_grid"
-                canAuthorNote={Boolean(grantedToMe?.can_comment)}
-                onNotesChange={setStickyNotes}>
-                <ContributionGrid logs={habitLogs} onSelectDate={() => {}} />
-              </StickyNotesCanvas>
-              <ContributionLegend />
-            </Card>
-          ) : null}
-
-          {grantedToMe?.can_view_timer ? (
-            <Card style={styles.card}>
-              <ThemedText type="sectionTitle">Focus</ThemedText>
-              {activeSession ? (
-                <ThemedText themeColor="textSecondary">
-                  Working on: {activeSession.task_description}
-                </ThemedText>
-              ) : (
-                <ThemedText themeColor="textSecondary">Not currently focusing.</ThemedText>
-              )}
-            </Card>
-          ) : null}
-
-          {grantedToMe?.can_view_mood ? (
-            <Card style={styles.card}>
-              <ThemedText type="sectionTitle">Mood (last 30 days)</ThemedText>
-              <MoodHistoryStrip
-                days={30}
-                entries={moodHistory}
-                selectedDate={selectedMoodDate ?? undefined}
-                onSelectDate={setSelectedMoodDate}
-              />
-              {selectedMoodDate ? (
-                (() => {
-                  const entry = moodHistory.find((e) => e.date === selectedMoodDate);
-                  if (!entry) return null;
-                  return (
-                    <View style={styles.moodNote}>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {fromDateKey(selectedMoodDate).toLocaleDateString(undefined, {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </ThemedText>
-                      <ThemedText>{entry.note || 'No note for this day.'}</ThemedText>
-                    </View>
-                  );
-                })()
-              ) : (
-                <ThemedText type="small" themeColor="textSecondary">
-                  Tap a day above to see their mood note.
-                </ThemedText>
-              )}
-            </Card>
-          ) : null}
-
-          {!sharesAnything ? (
-            <Card style={styles.card}>
-              <ThemedText themeColor="textSecondary">
-                {friendProfile.display_name} hasn't shared anything with you yet.
-              </ThemedText>
-            </Card>
-          ) : null}
-
-          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
-            What {friendProfile.display_name} can see of yours
-          </ThemedText>
+        {visiblePages.length === 0 ? (
           <Card style={styles.card}>
-            <ToggleRow
-              emoji="📈"
-              title="Habits & contribution grid"
-              value={grantedByMe.can_view_habits}
-              onValueChange={(v) => togglePermission('can_view_habits', v)}
-            />
-            <ToggleRow
-              emoji="⏱️"
-              title="Timer sessions"
-              value={grantedByMe.can_view_timer}
-              onValueChange={(v) => togglePermission('can_view_timer', v)}
-            />
-            <ToggleRow
-              emoji="🙂"
-              title="Mood"
-              value={grantedByMe.can_view_mood}
-              onValueChange={(v) => togglePermission('can_view_mood', v)}
-            />
-            <ToggleRow
-              emoji="📝"
-              title="Sticky notes"
-              description="Allow them to leave notes on modules you've shared."
-              value={grantedByMe.can_comment}
-              onValueChange={(v) => togglePermission('can_comment', v)}
-            />
+            <ThemedText themeColor="textSecondary">
+              {friendProfile.display_name} hasn't shared anything with you yet.
+            </ThemedText>
           </Card>
+        ) : (
+          <>
+            <View style={styles.segmented}>
+              {visiblePages.map((p) => (
+                <Pressable
+                  key={p.key}
+                  onPress={() => setActivePage(p.key)}
+                  style={[
+                    styles.segment,
+                    { backgroundColor: activePage === p.key ? theme.primary : theme.backgroundSelected },
+                  ]}>
+                  <ThemedText
+                    type="small"
+                    style={activePage === p.key ? { color: theme.onPrimary } : undefined}>
+                    {p.label}
+                  </ThemedText>
+                </Pressable>
+              ))}
+            </View>
 
-          <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two }}>
-            Period cycle data is never shared with any friend, under any setting.
-          </ThemedText>
-
-          <View style={styles.dangerZone}>
-            <Pressable onPress={confirmUnfriend} style={styles.dangerButton}>
-              <ThemedText themeColor="danger" type="smallBold">
-                Unfriend
-              </ThemedText>
-            </Pressable>
-            <Pressable onPress={confirmBlock} style={styles.dangerButton}>
-              <ThemedText themeColor="danger" type="smallBold">
-                Block
-              </ThemedText>
-            </Pressable>
-          </View>
-        </ScrollView>
+            <View style={{ flex: 1 }}>
+              {activePage === 'home' ? <HomeView userId={id} readOnly /> : null}
+              {activePage === 'timer' ? <TimerView userId={id} readOnly /> : null}
+              {activePage === 'todo' ? <TodoView userId={id} readOnly /> : null}
+              {activePage === 'mood' ? <MoodView userId={id} readOnly /> : null}
+            </View>
+          </>
+        )}
       </SafeAreaView>
     </ThemedView>
   );
@@ -302,14 +149,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     maxWidth: MaxContentWidth,
+    gap: Spacing.three,
   },
   centered: { justifyContent: 'center', alignItems: 'center' },
-  scroll: { paddingBottom: Spacing.six, gap: Spacing.three },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  title: { fontSize: 22 },
-  sectionTitle: { marginTop: Spacing.two },
+  title: { fontSize: 20 },
   card: { gap: Spacing.two },
-  moodNote: { gap: 2 },
-  dangerZone: { flexDirection: 'row', gap: Spacing.four, marginTop: Spacing.four, justifyContent: 'center' },
-  dangerButton: { paddingVertical: Spacing.two },
+  segmented: { flexDirection: 'row', gap: Spacing.two },
+  segment: { flex: 1, alignItems: 'center', paddingVertical: Spacing.two, borderRadius: Radius.md },
 });

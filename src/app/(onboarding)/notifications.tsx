@@ -31,8 +31,8 @@ export default function NotificationsScreen() {
           Stay on top of your streaks
         </ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.body}>
-          Turn on notifications so we can remind you about habit streaks, friend requests, and
-          sticky notes. You can change this anytime in Settings.
+          Turn on notifications so we can remind you about habit streaks and friend requests. You
+          can change this anytime in Settings.
         </ThemedText>
 
         <View style={styles.actions}>

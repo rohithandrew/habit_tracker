@@ -20,10 +20,12 @@ export function WeeklyHabitRow({
   habit,
   logs,
   onToggleDay,
+  readOnly,
 }: {
   habit: Habit;
   logs: HabitLog[];
   onToggleDay: (dateKey: string, currentlyDone: boolean) => void;
+  readOnly?: boolean;
 }) {
   const theme = useTheme();
   const weekDates = getWeekDates(new Date());
@@ -43,6 +45,7 @@ export function WeeklyHabitRow({
 
   return (
     <Pressable
+      disabled={readOnly}
       onPress={() => router.push(`/habit/${habit.id}`)}
       style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
       <View style={styles.titleRow}>
@@ -79,7 +82,7 @@ export function WeeklyHabitRow({
           return (
             <Pressable
               key={key}
-              disabled={!eligible || isFuture}
+              disabled={readOnly || !eligible || isFuture}
               onPress={(e) => {
                 e.stopPropagation();
                 onToggleDay(key, done);
