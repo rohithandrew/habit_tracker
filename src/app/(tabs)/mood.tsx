@@ -37,7 +37,10 @@ export default function MoodScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <MoodView userId={session.user.id} showPeriodLink={profile.period_tracking_enabled} />
+        <MoodView
+          userId={session.user.id}
+          showPeriodLink={profile.gender === 'female' && profile.period_tracking_enabled}
+        />
       </SafeAreaView>
     </ThemedView>
   );

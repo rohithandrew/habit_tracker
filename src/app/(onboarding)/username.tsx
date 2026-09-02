@@ -58,7 +58,7 @@ export default function UsernameScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="small" themeColor="textSecondary">
-          Step 1 of 6
+          Step 1 of 7
         </ThemedText>
         <ThemedText type="title" style={styles.title}>
           Choose a username
@@ -95,7 +95,7 @@ export default function UsernameScreen() {
             disabled={!canContinue}
             onPress={() => {
               update({ username });
-              router.push('/(onboarding)/avatar');
+              router.push('/(onboarding)/gender');
             }}
           />
         </View>

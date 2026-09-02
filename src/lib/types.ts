@@ -12,11 +12,14 @@ export type ScheduleData =
   | { type: 'date_range'; startDate: string; endDate: string }
   | { type: 'single_day'; date: string };
 
+export type Gender = 'female' | 'male' | 'other';
+
 export interface Profile {
   id: string;
   username: string | null;
   display_name: string | null;
   avatar_emoji: string;
+  gender: Gender | null;
   mood_tracking_enabled: boolean;
   period_tracking_enabled: boolean;
   timer_tracking_enabled: boolean;
@@ -72,6 +75,7 @@ export interface FriendPermission {
   can_view_timer: boolean;
   can_view_todo: boolean;
   can_view_mood: boolean;
+  can_view_period: boolean;
 }
 
 export interface PublicProfile {

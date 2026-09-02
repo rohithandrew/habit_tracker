@@ -45,6 +45,7 @@ export default function ProfileScreen() {
   const [moodEnabled, setMoodEnabled] = useState(profile?.mood_tracking_enabled ?? false);
   const [timerEnabled, setTimerEnabled] = useState(profile?.timer_tracking_enabled ?? true);
   const [todoEnabled, setTodoEnabled] = useState(profile?.todo_enabled ?? true);
+  const [periodEnabled, setPeriodEnabled] = useState(profile?.period_tracking_enabled ?? false);
 
   const [habitReminderEnabled, setHabitReminderEnabled] = useState(Boolean(profile?.habit_reminder_time));
   const [habitReminderTime, setHabitReminderTime] = useState(profile?.habit_reminder_time?.slice(0, 5) ?? '20:00');
@@ -79,13 +80,14 @@ export default function ProfileScreen() {
   }
 
   async function updateHealthSetting(
-    key: 'mood_tracking_enabled' | 'timer_tracking_enabled' | 'todo_enabled',
+    key: 'mood_tracking_enabled' | 'timer_tracking_enabled' | 'todo_enabled' | 'period_tracking_enabled',
     value: boolean
   ) {
     const setLocal = {
       mood_tracking_enabled: setMoodEnabled,
       timer_tracking_enabled: setTimerEnabled,
       todo_enabled: setTodoEnabled,
+      period_tracking_enabled: setPeriodEnabled,
     }[key];
     setLocal(value);
 
@@ -207,7 +209,14 @@ export default function ProfileScreen() {
               value={moodEnabled}
               onValueChange={(v) => updateHealthSetting('mood_tracking_enabled', v)}
             />
-            <ToggleRow emoji="🌙" title="Period cycle tracking" badge="Coming soon" />
+            {profile.gender === 'female' ? (
+              <ToggleRow
+                emoji="🌙"
+                title="Period tracker"
+                value={periodEnabled}
+                onValueChange={(v) => updateHealthSetting('period_tracking_enabled', v)}
+              />
+            ) : null}
             <ToggleRow
               emoji="📝"
               title="Todo list"

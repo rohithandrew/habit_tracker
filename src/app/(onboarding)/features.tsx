@@ -21,7 +21,7 @@ export default function FeaturesScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="small" themeColor="textSecondary">
-          Step 3 of 6
+          Step 4 of 7
         </ThemedText>
         <ThemedText type="title" style={styles.title}>
           Anything else you'd like to track?
@@ -45,13 +45,15 @@ export default function FeaturesScreen() {
             value={moodTrackingEnabled}
             onValueChange={setMoodTrackingEnabled}
           />
-          <ToggleRow
-            emoji="🌙"
-            title="Period cycle tracking"
-            description="Private — never shared with friends, under any setting."
-            value={periodTrackingEnabled}
-            onValueChange={setPeriodTrackingEnabled}
-          />
+          {draft.gender === 'female' ? (
+            <ToggleRow
+              emoji="🌙"
+              title="Period tracker"
+              description="Off by default for friends — you choose who, if anyone, can see it."
+              value={periodTrackingEnabled}
+              onValueChange={setPeriodTrackingEnabled}
+            />
+          ) : null}
         </Card>
 
         <View style={styles.actions}>

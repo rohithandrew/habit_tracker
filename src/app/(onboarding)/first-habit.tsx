@@ -38,10 +38,11 @@ export default function FirstHabitScreen() {
       .from('profiles')
       .update({
         username: draft.username,
+        gender: draft.gender,
         display_name: draft.displayName,
         avatar_emoji: draft.avatarKey,
         mood_tracking_enabled: draft.moodTrackingEnabled,
-        period_tracking_enabled: draft.periodTrackingEnabled,
+        period_tracking_enabled: draft.gender === 'female' && draft.periodTrackingEnabled,
         timer_tracking_enabled: draft.focusTimerEnabled,
         onboarding_completed: true,
       })
@@ -53,7 +54,7 @@ export default function FirstHabitScreen() {
       return;
     }
 
-    if (draft.periodTrackingEnabled && draft.periodLastStart) {
+    if (draft.gender === 'female' && draft.periodTrackingEnabled && draft.periodLastStart) {
       await supabase.from('period_logs').insert({
         user_id: session.user.id,
         cycle_start_date: draft.periodLastStart,
@@ -92,7 +93,7 @@ export default function FirstHabitScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <ThemedText type="small" themeColor="textSecondary">
-            Step 6 of 6
+            Step 7 of 7
           </ThemedText>
           <ThemedText type="title" style={styles.title}>
             Create your first habit

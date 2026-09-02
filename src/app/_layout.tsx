@@ -70,12 +70,16 @@ function RootNavigator() {
         options={{ headerShown: true, headerBackTitle: 'Back', title: 'Sharing settings' }}
       />
       <Stack.Screen
+        name="friend/[id]/period"
+        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Period tracker' }}
+      />
+      <Stack.Screen
         name="timer/history"
         options={{ headerShown: true, headerBackTitle: 'Back', title: 'Focus history' }}
       />
       <Stack.Screen
         name="mood/period"
-        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Period cycle' }}
+        options={{ headerShown: true, headerBackTitle: 'Back', title: 'Period tracker' }}
       />
       <Stack.Screen
         name="tasks/all"

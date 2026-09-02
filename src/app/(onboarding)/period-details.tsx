@@ -24,14 +24,14 @@ export default function PeriodDetailsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <ThemedText type="small" themeColor="textSecondary">
-            Step 4 of 6
+            Step 5 of 7
           </ThemedText>
           <ThemedText type="title" style={styles.title}>
-            Period cycle details
+            Period tracker details
           </ThemedText>
           <ThemedText themeColor="textSecondary">
-            This data stays private — there is no setting or friend permission that can ever
-            expose it.
+            Private by default — you can choose to share it with specific friends later from
+            Sharing settings.
           </ThemedText>
 
           <ThemedText type="smallBold" style={{ marginTop: Spacing.three }}>

@@ -133,7 +133,9 @@ export default function FriendDetailScreen() {
               {activePage === 'home' ? <HomeView userId={id} readOnly /> : null}
               {activePage === 'timer' ? <TimerView userId={id} readOnly /> : null}
               {activePage === 'todo' ? <TodoView userId={id} readOnly /> : null}
-              {activePage === 'mood' ? <MoodView userId={id} readOnly /> : null}
+              {activePage === 'mood' ? (
+                <MoodView userId={id} readOnly showPeriodLink={Boolean(grantedToMe?.can_view_period)} />
+              ) : null}
             </View>
           </>
         )}

@@ -24,7 +24,7 @@ export default function AvatarScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="small" themeColor="textSecondary">
-          Step 2 of 6
+          Step 3 of 7
         </ThemedText>
         <ThemedText type="title" style={styles.title}>
           Pick your look

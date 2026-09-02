@@ -1,31 +1,19 @@
+import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PeriodView } from '@/components/screens/period-view';
-import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useAuth } from '@/lib/auth-context';
 
-export default function PeriodCalculatorScreen() {
-  const { session, profile } = useAuth();
-
-  if (!session || !profile) return null;
-
-  if (profile.gender !== 'female' || !profile.period_tracking_enabled) {
-    return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={[styles.safeArea, styles.centered]}>
-          <ThemedText themeColor="textSecondary">Period tracker is off.</ThemedText>
-        </SafeAreaView>
-      </ThemedView>
-    );
-  }
+export default function FriendPeriodScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  if (!id) return null;
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-        <PeriodView userId={session.user.id} />
+        <PeriodView userId={id} readOnly />
       </SafeAreaView>
     </ThemedView>
   );
@@ -41,5 +29,4 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
   },
-  centered: { justifyContent: 'center', alignItems: 'center' },
 });

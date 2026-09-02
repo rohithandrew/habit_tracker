@@ -15,7 +15,7 @@ import type { FriendPermission, PublicProfile } from '@/lib/types';
 
 export default function FriendSettingsScreen() {
   const navigation = useNavigation();
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [friendProfile, setFriendProfile] = useState<PublicProfile | null>(null);
@@ -45,7 +45,10 @@ export default function FriendSettingsScreen() {
   }, [load]);
 
   async function togglePermission(
-    key: keyof Pick<FriendPermission, 'can_view_habits' | 'can_view_timer' | 'can_view_todo' | 'can_view_mood'>,
+    key: keyof Pick<
+      FriendPermission,
+      'can_view_habits' | 'can_view_timer' | 'can_view_todo' | 'can_view_mood' | 'can_view_period'
+    >,
     value: boolean
   ) {
     if (!session || !id || !grantedByMe) return;
@@ -141,11 +144,22 @@ export default function FriendSettingsScreen() {
               value={grantedByMe.can_view_mood}
               onValueChange={(v) => togglePermission('can_view_mood', v)}
             />
+            {profile?.gender === 'female' ? (
+              <ToggleRow
+                emoji="🌙"
+                title="Period tracker"
+                description="Off by default — only turn this on for friends you want to see it."
+                value={grantedByMe.can_view_period}
+                onValueChange={(v) => togglePermission('can_view_period', v)}
+              />
+            ) : null}
           </Card>
 
-          <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two }}>
-            Period cycle data is never shared with any friend, under any setting.
-          </ThemedText>
+          {profile?.gender !== 'female' ? (
+            <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two }}>
+              Period cycle data is never shared with any friend, under any setting.
+            </ThemedText>
+          ) : null}
 
           <View style={styles.dangerZone}>
             <Pressable onPress={confirmUnfriend} style={styles.dangerButton}>

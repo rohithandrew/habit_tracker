@@ -19,6 +19,7 @@ import {
     findUserByUsername,
     respondToFriendRequest,
     sendFriendRequest,
+    unblockUser,
 } from '@/lib/friends-api';
 import type { Friendship, PublicProfile } from '@/lib/types';
 
@@ -111,11 +112,23 @@ export default function FriendsScreen() {
     }
   }
 
+  async function handleUnblock(targetId: string) {
+    try {
+      await unblockUser(targetId);
+      await load();
+    } catch (err) {
+      Alert.alert('Could not unblock', err instanceof Error ? err.message : String(err));
+    }
+  }
+
   if (!session || !profile) return null;
 
   const incoming = friendships.filter((f) => f.status === 'pending' && f.addressee_id === session.user.id);
   const outgoing = friendships.filter((f) => f.status === 'pending' && f.requester_id === session.user.id);
   const accepted = friendships.filter((f) => f.status === 'accepted');
+  // unblock_user() only lets the blocker undo their own block, so only show
+  // people *you* blocked here — someone who blocked you shouldn't appear.
+  const blocked = friendships.filter((f) => f.status === 'blocked' && f.requester_id === session.user.id);
 
   const existingStatusWithSearchResult =
     searchResult && searchResult !== 'not_found'
@@ -306,6 +319,35 @@ export default function FriendsScreen() {
                   })}
                 </Card>
               )}
+
+              {blocked.length > 0 ? (
+                <>
+                  <ThemedText type="sectionTitle" style={styles.sectionTitle}>
+                    Blocked
+                  </ThemedText>
+                  <Card style={styles.card}>
+                    {blocked.map((f) => {
+                      const p = profiles[f.addressee_id];
+                      return (
+                        <View key={f.id} style={styles.requestRow}>
+                          <Avatar avatarKey={p?.avatar_emoji} />
+                          <View style={{ flex: 1 }}>
+                            <ThemedText type="smallBold">{p?.display_name ?? 'Someone'}</ThemedText>
+                            <ThemedText type="small" themeColor="textSecondary">
+                              @{p?.username}
+                            </ThemedText>
+                          </View>
+                          <Pressable onPress={() => handleUnblock(f.addressee_id)}>
+                            <ThemedText type="small" themeColor="accent">
+                              Unblock
+                            </ThemedText>
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                  </Card>
+                </>
+              ) : null}
             </>
           )}
         </ScrollView>

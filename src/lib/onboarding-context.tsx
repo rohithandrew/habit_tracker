@@ -1,9 +1,11 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 
 import { DEFAULT_AVATAR_KEY } from '@/lib/avatars';
+import type { Gender } from '@/lib/types';
 
 export interface OnboardingDraft {
   username: string;
+  gender: Gender | null;
   displayName: string;
   avatarKey: string;
   focusTimerEnabled: boolean;
@@ -20,6 +22,7 @@ interface OnboardingContextValue {
 
 const defaultDraft: OnboardingDraft = {
   username: '',
+  gender: null,
   displayName: '',
   avatarKey: DEFAULT_AVATAR_KEY,
   focusTimerEnabled: true,

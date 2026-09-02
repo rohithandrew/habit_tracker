@@ -22,7 +22,8 @@ export function MoodView({
 }: {
   userId: string;
   readOnly?: boolean;
-  /** Period data is never shared with friends, under any setting — only ever pass true in owned mode. */
+  /** Whether to show the "Period tracker" link — own mode: profile.gender === 'female' &&
+   * period_tracking_enabled; friend mode: the friend granted can_view_period. */
   showPeriodLink?: boolean;
 }) {
   const theme = useTheme();
@@ -181,10 +182,12 @@ export function MoodView({
         )}
       </Card>
 
-      {!readOnly && showPeriodLink ? (
-        <Pressable onPress={() => router.push('/mood/period')} style={styles.periodLink}>
+      {showPeriodLink ? (
+        <Pressable
+          onPress={() => router.push(readOnly ? `/friend/${userId}/period` : '/mood/period')}
+          style={styles.periodLink}>
           <Card style={styles.periodCard}>
-            <ThemedText type="smallBold">🌙 Period cycle</ThemedText>
+            <ThemedText type="smallBold">🌙 Period tracker</ThemedText>
             <ThemedText themeColor="textSecondary">›</ThemedText>
           </Card>
         </Pressable>
