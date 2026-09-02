@@ -90,11 +90,13 @@ export default function FriendDetailScreen() {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <View style={styles.headerRow}>
           <Avatar avatarKey={friendProfile.avatar_emoji} size={48} />
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, gap: 4 }}>
             <ThemedText type="subtitle" style={styles.title}>
               {friendProfile.display_name}
             </ThemedText>
-            <ThemedText themeColor="textSecondary">@{friendProfile.username}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              @{friendProfile.username}
+            </ThemedText>
           </View>
           <Pressable onPress={() => router.push(`/friend/${id}/settings`)} hitSlop={8}>
             <Ionicons name="ellipsis-horizontal" size={22} color={theme.text} />

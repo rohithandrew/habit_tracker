@@ -158,6 +158,10 @@ export function MoodView({
           </View>
         ) : selectedEntry?.note ? (
           <ThemedText themeColor="textSecondary">{selectedEntry.note}</ThemedText>
+        ) : readOnly && selectedEntry ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            No note for this day.
+          </ThemedText>
         ) : null}
       </Card>
 
